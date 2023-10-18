@@ -80,7 +80,9 @@ void SceneTicTacToe::Update(double dt)
 	}
 	if (Application::IsKeyPressed('R'))
 	{
-		//Exercise: Implement Reset button
+		for (auto& cell : m_grid)
+            cell = WHO_NONE;
+
 	}
 
 	//Input Section
@@ -93,8 +95,20 @@ void SceneTicTacToe::Update(double dt)
 		Application::GetCursorPos(&x, &y);
 		int w = Application::GetWindowWidth();
 		int h = Application::GetWindowHeight();
-		float posX = static_cast<float>(x) / w * m_worldWidth;
-		float posY = (h - static_cast<float>(y)) / h * m_worldHeight;
+		float posX = static_cast<float>(x) / w;
+		float posY = (h - static_cast<float>(y)) / h;
+        std::cout << posX << ',' << posY << std::endl;
+        if (posX <= 0.6)
+        {
+            int xIndex = (posX * 5);
+            int yIndex = (posY * 3);
+            std::cout << xIndex << ',' << yIndex << ',' << xIndex+(3*yIndex) << std::endl;
+            if (m_bCrossTurn)
+                m_grid[xIndex+(3*yIndex)] = WHO_CROSS;
+            else m_grid[xIndex+(3*yIndex)] = WHO_CIRCLE;
+            std::cout << m_grid[xIndex+(3*yIndex)] << std::endl;
+            m_bCrossTurn = !m_bCrossTurn;
+        }
 		//Exercise: Game inputs
 	}
 	else if (bLButtonState && !Application::IsMousePressed(0))

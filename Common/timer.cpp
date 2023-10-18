@@ -26,7 +26,6 @@ double StopWatch::getElapsedTime()
     auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(currTime-prevTime).count();
     prevTime = currTime;
     double deltaTime = delta / 1000.0;
-    std::cout << "INFO: " << deltaTime << std::endl;
     return deltaTime;
 }
 

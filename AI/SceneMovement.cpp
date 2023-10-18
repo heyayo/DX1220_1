@@ -133,16 +133,16 @@ void SceneMovement::Update(double dt)
 				float random = Math::RandFloatMinMax(0.f, 1.f);
 				//Exercise: set boundaries so that game objects would not leave scene
                 if (go->pos.x >= (m_gridSize-1)*m_gridOffset)
-                    go->target = {-1,0,0};
+                    go->target = go->pos + Vector3{-1,0,0};
                 else if (go->pos.x <= 0)
-                    go->target = {1,0,0};
+                    go->target = go->pos + Vector3{1,0,0};
                 else
                 {
                     //Exercise: use probability to decide go up or right
                     if (random > 0.5)
-                        go->target = {1,0,0};
+                        go->target = go->pos + Vector3{1,0,0};
                     else
-                        go->target = {-1,0,0};
+                        go->target = go->pos + Vector3{-1,0,0};
                 }
 				//Exercise: change the conditions so that the game objects can move randomly
 
