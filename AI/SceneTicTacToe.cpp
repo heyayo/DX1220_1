@@ -32,6 +32,8 @@ void SceneTicTacToe::Init()
 	m_bCrossTurn = true;
 	m_bGameOver = false;
 	m_winner = WHO_CONTENT::WHO_NONE;
+	
+	m_ghost = nullptr;
 }
 
 GameObject* SceneTicTacToe::FetchGO()
@@ -97,19 +99,19 @@ void SceneTicTacToe::Update(double dt)
 		int h = Application::GetWindowHeight();
 		float posX = static_cast<float>(x) / w;
 		float posY = (h - static_cast<float>(y)) / h;
-        std::cout << posX << ',' << posY << std::endl;
+		
+		float worldPosX = posX * m_worldWidth;
+		float worldPosY = posY * m_worldHeight;
+		
         if (posX <= 0.6)
         {
             int xIndex = (posX * 5);
             int yIndex = (posY * 3);
-            std::cout << xIndex << ',' << yIndex << ',' << xIndex+(3*yIndex) << std::endl;
             if (m_bCrossTurn)
                 m_grid[xIndex+(3*yIndex)] = WHO_CROSS;
             else m_grid[xIndex+(3*yIndex)] = WHO_CIRCLE;
-            std::cout << m_grid[xIndex+(3*yIndex)] << std::endl;
             m_bCrossTurn = !m_bCrossTurn;
         }
-		//Exercise: Game inputs
 	}
 	else if (bLButtonState && !Application::IsMousePressed(0))
 	{

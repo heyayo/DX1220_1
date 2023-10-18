@@ -1,8 +1,6 @@
 #include "timer.h"
 
-#ifdef __linux__
-
-#include <iostream>
+#ifndef USE_WINDOWS_API_TIMER
 
 StopWatch::StopWatch()
 {

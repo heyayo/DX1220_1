@@ -1,7 +1,7 @@
 #ifndef _TIMER_H
 #define _TIMER_H
 
-#ifdef __linux__
+#ifndef USE_WINDOWS_API_TIMER
 
 #include <chrono>
 
