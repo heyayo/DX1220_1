@@ -2,6 +2,8 @@
 
 #ifdef __linux__
 
+#include <iostream>
+
 StopWatch::StopWatch()
 {
     currTime = std::chrono::high_resolution_clock::now();
@@ -21,9 +23,11 @@ void StopWatch::startTimer()
 double StopWatch::getElapsedTime()
 {
     currTime = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::ratio<1,1>> delta = currTime - prevTime;
+    auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(currTime-prevTime).count();
     prevTime = currTime;
-    return delta.count();
+    double deltaTime = delta / 1000.0;
+    std::cout << "INFO: " << deltaTime << std::endl;
+    return deltaTime;
 }
 
 void StopWatch::waitUntil(long long int time)
@@ -31,9 +35,10 @@ void StopWatch::waitUntil(long long int time)
     Timepoint nowTime = std::chrono::high_resolution_clock::now();
     while (true)
     {
-        std::chrono::duration<double,std::ratio<1,1>> delta = nowTime - prevTime;
-        if ((delta.count()*1000) > time)
+        auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(nowTime-prevTime).count();
+        if (delta > time)
             break;
+        nowTime = std::chrono::high_resolution_clock::now();
     }
 }
 
