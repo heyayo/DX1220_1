@@ -9,7 +9,7 @@ endif ()
 add_executable(
         AIEXEC
         ${SOURCE_FILES}
-)
+        scenea1.cpp scenea1.hpp)
 
 target_include_directories(AIEXEC PUBLIC ${CMAKE_SOURCE_DIR}/Common/)
 target_include_directories(AIEXEC PUBLIC ${CMAKE_SOURCE_DIR}/include/)

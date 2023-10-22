@@ -122,10 +122,12 @@ void Application::Init()
 	}
 }
 
+#include "scenea1.hpp"
+
 void Application::Run()
 {
 	//Main Loop
-	Scene *scene = new SceneTicTacToe();
+	Scene *scene = new SceneA1();
 	scene->Init();
 
 	m_timer.startTimer();    // Start timer to calculate how long it takes to render this frame
