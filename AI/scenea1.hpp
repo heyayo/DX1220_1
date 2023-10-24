@@ -6,25 +6,29 @@
 
 class SceneA1 : public SceneBase
 {
-	const static int _gridXSize = 50;
-	const static int _gridYSize = 50;
-	Mesh* squareMesh;
-	
-	Mtx44 projectionMatrix;
-	Mtx44 viewMatrix;
-	Vector3 tileSize;
-	
 	struct Entity
 	{
 		Mesh* toRender;
-		
+
 	};
-	
+
 	struct TileData
 	{
-	
+        std::vector<Entity*> entitiesInTile;
+
 	};
-	
+
+	const static int _gridXSize = 50;
+	const static int _gridYSize = 50;
+	Mesh* _whiteSquareMesh;
+    Mesh* _blackSquareMesh;
+
+	Mtx44 _projectionMatrix;
+	Mtx44 _viewMatrix;
+	Vector3 _tileSize;
+
+    TileData _gridData[_gridXSize * _gridYSize];
+
 	void MoveCamera(const Vector3& offset);
 	
 public:
