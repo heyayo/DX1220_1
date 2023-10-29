@@ -41,12 +41,17 @@ void SceneA1::Init()
 
     _tileSize =
 		{
-			static_cast<float>(Application::GetWindowWidth())
+			static_cast<float>(Application::GetWindowHeight())
 			/ static_cast<float>(_gridXSize),
 			static_cast<float>(Application::GetWindowHeight())
 			/ static_cast<float>(_gridYSize),
 			1
 		};
+	
+	_gridWidth = _gridXSize * static_cast<float>(Application::GetWindowWidth())
+							  / static_cast<float>(_gridXSize);
+	_gridHeight = _gridYSize * static_cast<float>(Application::GetWindowHeight())
+							   / static_cast<float>(_gridXSize);
 }
 
 #include "GLFW/glfw3.h"
@@ -78,6 +83,7 @@ void SceneA1::Render()
                                  -1.f);
          */
         modelStack.Scale(UnpackVector(_tileSize));
+		// Offset Square "Render From Bottom Left Corner"
         modelStack.Translate(.5f,.5f,0);
         Mesh* meshes[] = {_whiteSquareMesh,_blackSquareMesh};
         for (int i = 0; i < _gridXSize; ++i)
@@ -114,4 +120,13 @@ void SceneA1::MoveCamera(const Vector3& offset)
 		UnpackVector(camera.up)
 	);
     viewStack.LoadMatrix(_viewMatrix);
+}
+
+void SceneA1::RenderEntity(Entity entity)
+{
+	modelStack.PushMatrix();
+	modelStack.Translate(UnpackVector(entity.getPosition()));
+	modelStack.Scale(UnpackVector(entity.getScale()));
+	RenderMesh(entity.getMesh(),false);
+	modelStack.PopMatrix();
 }

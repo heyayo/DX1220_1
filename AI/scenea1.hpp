@@ -4,22 +4,20 @@
 #include "SceneBase.h"
 #include "MatrixStack.h"
 
+#include "Entities/entity.hpp"
+
 class SceneA1 : public SceneBase
 {
-	struct Entity
-	{
-		Mesh* toRender;
-
-	};
-
 	struct TileData
 	{
         std::vector<Entity*> entitiesInTile;
 
 	};
 
-	const static int _gridXSize = 50;
-	const static int _gridYSize = 50;
+	const static int _gridXSize = 30;
+	const static int _gridYSize = 30;
+	float _gridWidth;
+	float _gridHeight;
 	Mesh* _whiteSquareMesh;
     Mesh* _blackSquareMesh;
 
@@ -28,8 +26,12 @@ class SceneA1 : public SceneBase
 	Vector3 _tileSize;
 
     TileData _gridData[_gridXSize * _gridYSize];
+	std::vector<GameObject*> _leftTeam;
+	std::vector<GameObject*> _rightTeam;
 
 	void MoveCamera(const Vector3& offset);
+	
+	void RenderEntity(Entity entity);
 	
 public:
 	virtual void Init();

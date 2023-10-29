@@ -9,10 +9,11 @@ endif ()
 add_executable(
         AIEXEC
         ${SOURCE_FILES}
-        scenea1.cpp scenea1.hpp)
+        scenea1.cpp scenea1.hpp Entities/entity.cpp)
 
 target_include_directories(AIEXEC PUBLIC ${CMAKE_SOURCE_DIR}/Common/)
 target_include_directories(AIEXEC PUBLIC ${CMAKE_SOURCE_DIR}/include/)
+target_include_directories(AIEXEC PUBLIC ${CMAKE_SOURCE_DIR}/AI/)
 
 target_link_libraries(AIEXEC PUBLIC CommonLib)
 if (WIN32)
