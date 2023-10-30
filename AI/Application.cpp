@@ -19,6 +19,9 @@ const unsigned char FPS = 60; // FPS of this game
 const unsigned int frameTime = 1000 / FPS; // time for each frame
 int m_width, m_height;
 
+bool Application::_mouseRecords[3] = {false};
+bool Application::_mouseCurrent[3] = {false};
+
 //Define an error callback
 static void error_callback(int error, const char* description)
 {
@@ -50,6 +53,14 @@ bool Application::IsMousePressed(unsigned short key) //0 - Left, 1 - Right, 2 - 
 {
 	return glfwGetMouseButton(m_window, key) != 0;
 }
+
+bool Application::IsMouseJustPressed(unsigned short key)
+{
+    bool isHeld = glfwGetMouseButton(m_window,key) != 0;
+    _mouseCurrent[key] = isHeld;
+    return isHeld && !_mouseRecords[key];
+}
+
 void Application::GetCursorPos(double *xpos, double *ypos)
 {
 	glfwGetCursorPos(m_window, xpos, ypos);
@@ -123,6 +134,7 @@ void Application::Init()
 }
 
 #include "scenea1.hpp"
+#include <string.h>
 
 void Application::Run()
 {
@@ -135,6 +147,7 @@ void Application::Run()
 	{
 		scene->Update(m_timer.getElapsedTime());
 		scene->Render();
+        memcpy(_mouseRecords,_mouseCurrent,sizeof(bool)*3);
 		//Swap buffers
 		glfwSwapBuffers(m_window);
 		//Get and organize events, like keyboard and mouse input, window resizing, etc...

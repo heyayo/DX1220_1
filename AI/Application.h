@@ -17,6 +17,7 @@ public:
 	void Exit();
 	static bool IsKeyPressed(unsigned short key);
 	static bool IsMousePressed(unsigned short key);
+    static bool IsMouseJustPressed(unsigned short key);
 	static void GetCursorPos(double *xpos, double *ypos);
 	static int GetWindowWidth();
 	static int GetWindowHeight();
@@ -24,6 +25,9 @@ public:
 private:
 	Application();
 	~Application();
+
+    static bool _mouseRecords[3];
+    static bool _mouseCurrent[3];
 
 	//Declare a window object
 	StopWatch m_timer;

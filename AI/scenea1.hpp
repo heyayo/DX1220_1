@@ -26,12 +26,13 @@ class SceneA1 : public SceneBase
 	Vector3 _tileSize;
 
     TileData _gridData[_gridXSize * _gridYSize];
-	std::vector<GameObject*> _leftTeam;
-	std::vector<GameObject*> _rightTeam;
+	std::vector<Entity*> _leftTeam;
+	std::vector<Entity*> _rightTeam;
 
 	void MoveCamera(const Vector3& offset);
 	
-	void RenderEntity(Entity entity);
+	void RenderEntity(Entity* entity);
+    std::pair<double,double> ScreenToWorldSpace(double x, double y);
 	
 public:
 	virtual void Init();

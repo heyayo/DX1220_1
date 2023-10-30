@@ -48,10 +48,10 @@ void SceneA1::Init()
 			1
 		};
 	
-	_gridWidth = _gridXSize * static_cast<float>(Application::GetWindowWidth())
+	_gridWidth = _gridXSize * static_cast<float>(Application::GetWindowHeight())
 							  / static_cast<float>(_gridXSize);
 	_gridHeight = _gridYSize * static_cast<float>(Application::GetWindowHeight())
-							   / static_cast<float>(_gridXSize);
+							   / static_cast<float>(_gridYSize);
 }
 
 #include "GLFW/glfw3.h"
@@ -67,6 +67,18 @@ void SceneA1::Update(double dt)
         MoveCamera({0,-camSpeed,0});
     if (Application::IsKeyPressed(GLFW_KEY_S))
         MoveCamera({0,camSpeed,0});
+
+    if (Application::IsMouseJustPressed(0))
+    {
+        double mouseX = 0,mouseY = 0;
+        Application::GetCursorPos(&mouseX,&mouseY);
+        auto worldCoords = ScreenToWorldSpace(mouseX,mouseY);
+        if (worldCoords.first < 0 || worldCoords.first >= _gridWidth)
+            std::cout << "Out of Bounds X Coordinates" << std::endl;
+        if (worldCoords.second < 0 || worldCoords.second >= _gridHeight)
+            std::cout << "Out of Bounds Y Coordinates" << std::endl;
+        std::cout << worldCoords.first << ',' << worldCoords.second << std::endl;
+    }
 }
 
 void SceneA1::Render()
@@ -75,6 +87,7 @@ void SceneA1::Render()
 	
 	modelStack.LoadIdentity();
 
+    // Render Grid using Individual Black and White Squares
     {
         modelStack.PushMatrix();
         /*
@@ -99,6 +112,16 @@ void SceneA1::Render()
         }
         modelStack.PopMatrix();
     }
+
+    // Rendering Entities
+    for (auto x : _leftTeam)
+    {
+        RenderEntity(x);
+    }
+    for (auto x : _rightTeam)
+    {
+        RenderEntity(x);
+    }
 }
 
 void SceneA1::Exit()
@@ -122,11 +145,16 @@ void SceneA1::MoveCamera(const Vector3& offset)
     viewStack.LoadMatrix(_viewMatrix);
 }
 
-void SceneA1::RenderEntity(Entity entity)
+void SceneA1::RenderEntity(Entity* entity)
 {
 	modelStack.PushMatrix();
-	modelStack.Translate(UnpackVector(entity.getPosition()));
-	modelStack.Scale(UnpackVector(entity.getScale()));
-	RenderMesh(entity.getMesh(),false);
+	modelStack.Translate(UnpackVector(entity->getPosition()));
+	modelStack.Scale(UnpackVector(entity->getScale()));
+	RenderMesh(entity->getMesh(),false);
 	modelStack.PopMatrix();
+}
+
+std::pair<double,double> SceneA1::ScreenToWorldSpace(double x, double y)
+{
+    return {x + camera.position.x, y - camera.position.y};
 }
