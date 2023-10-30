@@ -6,6 +6,8 @@
 
 #include "Entities/entity.hpp"
 
+#include <queue>
+
 class SceneA1 : public SceneBase
 {
 	struct TileData
@@ -34,12 +36,35 @@ class SceneA1 : public SceneBase
 	
 	void RenderEntity(Entity* entity);
     std::pair<double,double> ScreenToWorldSpace(double x, double y);
+	static std::pair<double,double> MousePos();
+	std::pair<double,double> MousePosWorldSpace();
+	
+	static unsigned LoadImage(const char* filepath);
+	
+	void MouseSpawnEntity();
+	void PhysicsStep();
+	int ConvertXYToIndex(float x, float y);
 	
 public:
 	virtual void Init();
 	virtual void Update(double dt);
 	virtual void Render();
 	virtual void Exit();
+	
+	enum class PhysEventType : unsigned char
+	{
+		MOVE = 0,
+		ALL_TYPE = 255
+	};
+	
+	struct PhysEvent
+	{
+		Entity* issuer;
+		PhysEventType type;
+		Vector3 velocity;
+	};
+	
+	static std::queue<PhysEvent> physicsEventQueue;
 };
 
 

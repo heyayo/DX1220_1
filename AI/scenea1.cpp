@@ -2,7 +2,6 @@
 
 #include "Application.h"
 #include "MeshBuilder.h"
-#include "LoadTGA.h"
 
 #include "GL/glew.h"
 
@@ -43,7 +42,7 @@ void SceneA1::Init()
             "MeleeUnit",
             {1,1,1}
             );
-    _meleeUnit->textureID = LoadTGA("Image/meleeunit.tga");
+	_meleeUnit->textureID = LoadImage("Image/sword.png");
 
     _tileSize =
 		{
@@ -60,6 +59,15 @@ void SceneA1::Init()
 							   / static_cast<float>(_gridYSize);
 }
 
+int SceneA1::ConvertXYToIndex(float x, float y)
+{
+	int xIndex = static_cast<int>(x/_tileSize.x);
+	int yIndex = static_cast<int>(y/_tileSize.y);
+	std::cout << "xIndex: " << xIndex << std::endl;
+	std::cout << "yIndex: " << yIndex << std::endl;
+	return xIndex + (_gridYSize * yIndex);
+}
+
 #include "GLFW/glfw3.h"
 
 void SceneA1::Update(double dt)
@@ -74,17 +82,88 @@ void SceneA1::Update(double dt)
     if (Application::IsKeyPressed(GLFW_KEY_S))
         MoveCamera({0,camSpeed,0});
 
-    if (Application::IsMouseJustPressed(0))
-    {
-        double mouseX = 0,mouseY = 0;
-        Application::GetCursorPos(&mouseX,&mouseY);
-        auto worldCoords = ScreenToWorldSpace(mouseX,mouseY);
-        if (worldCoords.first < 0 || worldCoords.first >= _gridWidth)
-            std::cout << "Out of Bounds X Coordinates" << std::endl;
-        if (worldCoords.second < 0 || worldCoords.second >= _gridHeight)
-            std::cout << "Out of Bounds Y Coordinates" << std::endl;
-        std::cout << worldCoords.first << ',' << worldCoords.second << std::endl;
-    }
+    MouseSpawnEntity();
+	
+	PhysicsStep();
+}
+
+void SceneA1::MouseSpawnEntity()
+{
+	if (Application::IsMouseJustPressed(0))
+	{
+		auto worldCoords = MousePosWorldSpace();
+		// Bounds Checking
+		if (worldCoords.first < 0 || worldCoords.first >= _gridWidth)
+		{
+			std::cout << "Out of Bounds X Coordinates" << std::endl;
+			return;
+		}
+		if (worldCoords.second < 0 || worldCoords.second >= _gridHeight)
+		{
+			std::cout << "Out of Bounds Y Coordinates" << std::endl;
+			return;
+		}
+		std::cout << worldCoords.first << ',' << worldCoords.second << std::endl;
+		
+		// Allocate Entity and Assign Team
+		Entity* temp = new Entity(_meleeUnit);
+		temp->setPosition(
+			{static_cast<float>(worldCoords.first),
+			 static_cast<float>(worldCoords.second),2});
+		temp->setScale({50,50,50});
+		
+		// Assign Left or Right Team based on Grid Location
+		if (worldCoords.first > _gridWidth*0.5f)
+			_leftTeam.emplace_back(temp);
+		else
+			_rightTeam.emplace_back(temp);
+		
+		// Put Entity Into Grid Cell
+		int index = ConvertXYToIndex(worldCoords.first,worldCoords.second);
+		std::cout << "Final Index: " << index << std::endl;
+		_gridData[index].entitiesInTile.emplace_back(temp);
+	}
+	
+	if (Application::IsMouseJustPressed(1))
+	{
+		auto mousePos = MousePosWorldSpace();
+		PhysEvent event{_leftTeam.front(),PhysEventType::MOVE,};
+		_leftTeam.front()->setPosition(
+			{static_cast<float>(mousePos.first),
+			 static_cast<float>(mousePos.second), 2});
+	}
+}
+
+#include <algorithm>
+
+void SceneA1::PhysicsStep()
+{
+	auto event = physicsEventQueue.front();
+	
+	// MOVE Event
+	if ((unsigned char)event.type & (unsigned char)PhysEventType::MOVE)
+	{
+		// Find Entity in Old Cell
+		auto pos = event.issuer->getPosition();
+		int oldIndex = ConvertXYToIndex(pos.x,pos.y);
+		auto olditer = std::find(
+			_gridData->entitiesInTile.begin(),
+			_gridData->entitiesInTile.end(),
+			event.issuer
+			);
+		// Remove from Old Cell
+		_gridData->entitiesInTile.erase(olditer);
+		// MOVE Entity
+		event.issuer->setPosition(pos + event.velocity);
+		// Find New Cell
+		pos = event.issuer->getPosition();
+		int newIndex = ConvertXYToIndex(pos.x,pos.y);
+		// Add to New Cell
+		_gridData[newIndex].entitiesInTile.emplace_back(event.issuer);
+	}
+	// Other Events
+	
+	physicsEventQueue.pop();
 }
 
 void SceneA1::Render()
@@ -132,8 +211,16 @@ void SceneA1::Render()
 
 void SceneA1::Exit()
 {
+	// Free Mesh Pointers
     delete _whiteSquareMesh;
     delete _blackSquareMesh;
+	delete _meleeUnit;
+	
+	// Free Entities
+	for (auto& x : _leftTeam)
+		delete x;
+	for (auto& x : _rightTeam)
+		delete x;
 }
 
 void SceneA1::MoveCamera(const Vector3& offset)
@@ -162,5 +249,53 @@ void SceneA1::RenderEntity(Entity* entity)
 
 std::pair<double,double> SceneA1::ScreenToWorldSpace(double x, double y)
 {
-    return {x + camera.position.x, y - camera.position.y};
+    return {x + camera.position.x, y + camera.position.y};
+}
+
+std::pair<double, double> SceneA1::MousePos()
+{
+	double x,y;
+	Application::GetCursorPos(&x,&y);
+	y = Application::GetWindowHeight() - y;
+	return {x,y};
+}
+
+std::pair<double, double> SceneA1::MousePosWorldSpace()
+{
+	auto temp = MousePos();
+	return ScreenToWorldSpace(temp.first,temp.second);
+}
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+unsigned SceneA1::LoadImage(const char* filepath)
+{
+	int x,y,n;
+	unsigned char* pixel_data = stbi_load(filepath,&x,&y,&n,4);
+	if (!pixel_data)
+	{
+		std::cerr << "Failed To Load Image | " << filepath << std::endl;
+		std::cerr << stbi_failure_reason() << std::endl;
+		return 0;
+	}
+	
+	GLuint textureID = 0;
+	glGenTextures(1,&textureID);
+	glBindTexture(GL_TEXTURE_2D,textureID);
+	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,x,y,0,GL_BGRA,GL_UNSIGNED_BYTE,pixel_data);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR_MIPMAP_LINEAR);
+	float maxAnisotropy = 1.f;
+	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnisotropy);
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, (GLint)maxAnisotropy );
+	
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	
+	glGenerateMipmap( GL_TEXTURE_2D );
+	
+	stbi_image_free(pixel_data);
+	
+	return textureID;
 }
