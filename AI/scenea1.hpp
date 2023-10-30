@@ -20,6 +20,7 @@ class SceneA1 : public SceneBase
 	float _gridHeight;
 	Mesh* _whiteSquareMesh;
     Mesh* _blackSquareMesh;
+    Mesh* _meleeUnit;
 
 	Mtx44 _projectionMatrix;
 	Mtx44 _viewMatrix;

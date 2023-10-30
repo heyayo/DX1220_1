@@ -2,6 +2,7 @@
 
 #include "Application.h"
 #include "MeshBuilder.h"
+#include "LoadTGA.h"
 
 #include "GL/glew.h"
 
@@ -38,6 +39,11 @@ void SceneA1::Init()
     _blackSquareMesh = MeshBuilder::GenerateQuad(
 		"BlackMesh",
 		{0,0,0});
+    _meleeUnit = MeshBuilder::GenerateQuad(
+            "MeleeUnit",
+            {1,1,1}
+            );
+    _meleeUnit->textureID = LoadTGA("Image/meleeunit.tga");
 
     _tileSize =
 		{
