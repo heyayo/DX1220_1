@@ -3,9 +3,18 @@
 #include "Application.h"
 #include "MeshBuilder.h"
 
+#include "FSMs/MeleeUnitFsm.hpp"
+
 #include "GL/glew.h"
 
 #define UnpackVector(vec) vec.x,vec.y,vec.z
+
+Vector3 SceneA1::_tileSize;
+std::vector<Entity*> SceneA1::_leftTeam;
+std::vector<Entity*> SceneA1::_rightTeam;
+std::vector<FSM*> SceneA1::_fsms;
+std::queue<SceneA1::PhysEvent> SceneA1::physicsEventQueue;
+SceneA1::TileData SceneA1::_gridData[_gridXSize * _gridYSize];
 
 void SceneA1::Init()
 {
@@ -38,11 +47,11 @@ void SceneA1::Init()
     _blackSquareMesh = MeshBuilder::GenerateQuad(
 		"BlackMesh",
 		{0,0,0});
-    _meleeUnit = MeshBuilder::GenerateQuad(
+    _meleeUnitMesh = MeshBuilder::GenerateQuad(
             "MeleeUnit",
             {1,1,1}
             );
-	_meleeUnit->textureID = LoadImage("Image/sword.png");
+    _meleeUnitMesh->textureID = LoadImage("Image/sword.png");
 
     _tileSize =
 		{
@@ -63,8 +72,6 @@ int SceneA1::ConvertXYToIndex(float x, float y)
 {
 	int xIndex = static_cast<int>(x/_tileSize.x);
 	int yIndex = static_cast<int>(y/_tileSize.y);
-	std::cout << "xIndex: " << xIndex << std::endl;
-	std::cout << "yIndex: " << yIndex << std::endl;
 	return xIndex + (_gridYSize * yIndex);
 }
 
@@ -83,8 +90,11 @@ void SceneA1::Update(double dt)
         MoveCamera({0,camSpeed,0});
 
     MouseSpawnEntity();
-	
-	PhysicsStep();
+
+    for (auto& fsm : _fsms)
+    {
+        fsm->Update(dt);
+    }
 }
 
 void SceneA1::MouseSpawnEntity()
@@ -106,36 +116,50 @@ void SceneA1::MouseSpawnEntity()
 		std::cout << worldCoords.first << ',' << worldCoords.second << std::endl;
 		
 		// Allocate Entity and Assign Team
-		Entity* temp = new Entity(_meleeUnit);
+		Entity* temp = new Entity(_meleeUnitMesh);
 		temp->setPosition(
 			{static_cast<float>(worldCoords.first),
 			 static_cast<float>(worldCoords.second),2});
 		temp->setScale({50,50,50});
-		
+
 		// Assign Left or Right Team based on Grid Location
 		if (worldCoords.first > _gridWidth*0.5f)
-			_leftTeam.emplace_back(temp);
+        {
+            _leftTeam.emplace_back(temp);
+            MeleeUnitFSM* fsm = new MeleeUnitFSM(temp,_rightTeam);
+            _fsms.emplace_back(fsm);
+        }
 		else
-			_rightTeam.emplace_back(temp);
-		
+        {
+            _rightTeam.emplace_back(temp);
+            MeleeUnitFSM* fsm = new MeleeUnitFSM(temp,_leftTeam);
+            _fsms.emplace_back(fsm);
+        }
+
+        /*
+         * Not using Grid Physics Anymore
 		// Put Entity Into Grid Cell
 		int index = ConvertXYToIndex(worldCoords.first,worldCoords.second);
 		std::cout << "Final Index: " << index << std::endl;
 		_gridData[index].entitiesInTile.emplace_back(temp);
+         */
 	}
 	
 	if (Application::IsMouseJustPressed(1))
 	{
 		auto mousePos = MousePosWorldSpace();
+        /*
 		PhysEvent event{_leftTeam.front(),PhysEventType::MOVE,};
 		_leftTeam.front()->setPosition(
 			{static_cast<float>(mousePos.first),
 			 static_cast<float>(mousePos.second), 2});
+         */
 	}
 }
 
 #include <algorithm>
 
+// Unused
 void SceneA1::PhysicsStep()
 {
 	auto event = physicsEventQueue.front();
@@ -214,13 +238,15 @@ void SceneA1::Exit()
 	// Free Mesh Pointers
     delete _whiteSquareMesh;
     delete _blackSquareMesh;
-	delete _meleeUnit;
+	delete _meleeUnitMesh;
 	
-	// Free Entities
+	// Free Entities and FSMs
 	for (auto& x : _leftTeam)
 		delete x;
 	for (auto& x : _rightTeam)
 		delete x;
+    for (auto& x : _fsms)
+        delete x;
 }
 
 void SceneA1::MoveCamera(const Vector3& offset)
@@ -298,4 +324,112 @@ unsigned SceneA1::LoadImage(const char* filepath)
 	stbi_image_free(pixel_data);
 	
 	return textureID;
+}
+
+Vector3 SceneA1::FindCloseEntities(int tileRange, const Vector3 &from)
+{
+    int fromIndex = ConvertXYToIndex(from.x,from.y);
+
+    // Spiral Search
+
+
+    return {};
+}
+
+int SceneA1::AboveIndex(int from)
+{
+    return from+_gridYSize;
+}
+
+int SceneA1::BottomIndex(int from)
+{
+    return from-_gridYSize;
+}
+
+int SceneA1::LeftIndex(int from)
+{
+    return from-1;
+}
+
+int SceneA1::RightIndex(int from)
+{
+    return from+1;
+}
+
+int SceneA1::SpiralSearch(int radius, int startingIndex)
+{
+    // Entity TileCheck Lambda
+    auto tileCheck = [](int index){ return !_gridData[index].entitiesInTile.empty(); };
+
+    // Top to Right
+    int now = startingIndex;
+    for (int i = 0; i < radius; ++i)
+        now = AboveIndex(now);
+    if (tileCheck(now)) return now;
+    for (int i = 0; i< radius; ++i)
+    {
+        now = RightIndex(now);
+        if (tileCheck(now)) return now;
+    }
+
+    // Right to Down
+    now = startingIndex;
+    for (int i = 0; i < radius; ++i)
+        now = RightIndex(now);
+    if (tileCheck(now)) return now;
+    for (int i = 0; i< radius; ++i)
+    {
+        now = BottomIndex(now);
+        if (tileCheck(now)) return now;
+    }
+
+    // Down to Left
+    now = startingIndex;
+    for (int i = 0; i < radius; ++i)
+        now = BottomIndex(now);
+    if (tileCheck(now)) return now;
+    for (int i = 0; i< radius; ++i)
+    {
+        now = LeftIndex(now);
+        if (tileCheck(now)) return now;
+    }
+
+    // Left to Up
+    now = startingIndex;
+    for (int i = 0; i < radius; ++i)
+        now = LeftIndex(now);
+    if (tileCheck(now)) return now;
+    for (int i = 0; i< radius; ++i)
+    {
+        now = AboveIndex(now);
+        if (tileCheck(now)) return now;
+    }
+}
+
+Entity* SceneA1::BruteForceFindCloseEntities(const std::vector<Entity*> team, const Vector3& from)
+{
+    float shortestDistance = std::numeric_limits<float>::max();
+    Entity* closestEntity = nullptr;
+    for (auto& entity : team)
+    {
+        auto deltaPositions = entity->getPosition() - from;
+        float deltaPositionLength = deltaPositions.LengthSquared();
+        if (deltaPositionLength < shortestDistance)
+        {
+            shortestDistance = deltaPositionLength;
+            closestEntity = entity;
+        }
+    }
+
+    return closestEntity;
+}
+
+const std::vector<Entity*> &SceneA1::LeftTeam()
+{
+    return _leftTeam;
+}
+
+const std::vector<Entity*> &SceneA1::RightTeam()
+{
+    return _rightTeam;
 }

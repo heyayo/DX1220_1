@@ -5,6 +5,7 @@
 #include "MatrixStack.h"
 
 #include "Entities/entity.hpp"
+#include "FSMs/Fsm.hpp"
 
 #include <queue>
 
@@ -22,15 +23,16 @@ class SceneA1 : public SceneBase
 	float _gridHeight;
 	Mesh* _whiteSquareMesh;
     Mesh* _blackSquareMesh;
-    Mesh* _meleeUnit;
+    Mesh* _meleeUnitMesh;
 
 	Mtx44 _projectionMatrix;
 	Mtx44 _viewMatrix;
-	Vector3 _tileSize;
+	static Vector3 _tileSize;
 
-    TileData _gridData[_gridXSize * _gridYSize];
-	std::vector<Entity*> _leftTeam;
-	std::vector<Entity*> _rightTeam;
+    static TileData _gridData[_gridXSize * _gridYSize];
+	static std::vector<Entity*> _leftTeam;
+	static std::vector<Entity*> _rightTeam;
+    static std::vector<FSM*> _fsms;
 
 	void MoveCamera(const Vector3& offset);
 	
@@ -43,7 +45,7 @@ class SceneA1 : public SceneBase
 	
 	void MouseSpawnEntity();
 	void PhysicsStep();
-	int ConvertXYToIndex(float x, float y);
+	static int ConvertXYToIndex(float x, float y);
 	
 public:
 	virtual void Init();
@@ -65,6 +67,18 @@ public:
 	};
 	
 	static std::queue<PhysEvent> physicsEventQueue;
+
+    static Entity* BruteForceFindCloseEntities(const std::vector<Entity*> team, const Vector3& from);
+
+    static Vector3 FindCloseEntities(int tileRange, const Vector3& from);
+    static int SpiralSearch(int radius, int startingIndex);
+    static int AboveIndex(int from);
+    static int BottomIndex(int from);
+    static int LeftIndex(int from);
+    static int RightIndex(int from);
+
+    static const std::vector<Entity*>& LeftTeam();
+    static const std::vector<Entity*>& RightTeam();
 };
 
 
