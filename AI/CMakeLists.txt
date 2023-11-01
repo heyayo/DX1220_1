@@ -11,7 +11,12 @@ add_executable(
         ${SOURCE_FILES}
         scenea1.cpp Entities/entity.cpp
         FSMs/Fsm.cpp
+        GridSystem.cpp
+        GridSystem.hpp
+        SceneA1TakeTwo.cpp
+        SceneA1TakeTwo.hpp
         FSMs/MeleeUnitFsm.cpp
+        FSMs/MeleeUnitFsm.hpp
 )
 
 target_include_directories(AIEXEC PUBLIC ${CMAKE_SOURCE_DIR}/Common/)

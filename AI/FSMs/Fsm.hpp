@@ -7,7 +7,6 @@
 class FSM
 {
     int _state = 0;
-    std::vector<Entity*>& oppositeTeam;
     Entity* owner;
 
 protected:
@@ -15,22 +14,16 @@ protected:
     float _moveSpeed;
 
 public:
-    FSM(Entity* o, std::vector<Entity*>& opTeam);
+    FSM(Entity* o);
     virtual ~FSM() = default;
 
     template<typename T>
     void ChangeState(T state)
-    {
-        _state = static_cast<int>(state);
-    }
-
+    { _state = static_cast<int>(state); }
     template<typename T>
     T GetCurrentState()
-    {
-        return static_cast<T>(_state);
-    }
+    { return static_cast<T>(_state); }
 
-    const std::vector<Entity*>& GetOppositeTeam();
     Entity* GetOwner();
 
     virtual void Update(double deltaTime) = 0;

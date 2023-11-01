@@ -133,13 +133,13 @@ void Application::Init()
 	}
 }
 
-#include "scenea1.hpp"
+#include "SceneA1TakeTwo.hpp"
 #include <string.h>
 
 void Application::Run()
 {
 	//Main Loop
-	Scene *scene = new SceneA1();
+	Scene *scene = new SceneA1TakeTwo();
 	scene->Init();
 
 	m_timer.startTimer();    // Start timer to calculate how long it takes to render this frame

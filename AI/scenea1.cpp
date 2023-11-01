@@ -292,7 +292,6 @@ std::pair<double, double> SceneA1::MousePosWorldSpace()
 	return ScreenToWorldSpace(temp.first,temp.second);
 }
 
-#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
 unsigned SceneA1::LoadImage(const char* filepath)

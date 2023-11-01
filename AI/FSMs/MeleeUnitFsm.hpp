@@ -9,17 +9,11 @@ class MeleeUnitFSM : public FSM
     {
         MOVING,
         ATTACKING,
-        IDLE,
-        ALL_STATE
+        SEARCHING
     };
 
-    void MovingState(double deltaTime);
-    void AttackingState();
-    void IdleState();
-
-
 public:
-    MeleeUnitFSM(Entity* o, std::vector<Entity*>& opTeam);
+    MeleeUnitFSM(Entity* o);
 
     virtual void Update(double deltaTime) override;
 };
