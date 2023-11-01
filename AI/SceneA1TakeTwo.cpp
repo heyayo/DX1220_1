@@ -50,8 +50,8 @@ void SceneA1TakeTwo::Init()
 
     // Initialize Grid System
     float cellUniform = Application::GetWindowHeight()/30;
-    _leftTeamGrid.Init(30,30,cellUniform,cellUniform);
-    _rightTeamGrid.Init(30,30,cellUniform,cellUniform);
+    _leftTeamGrid.init(30, 30, cellUniform, cellUniform);
+    _rightTeamGrid.init(30, 30, cellUniform, cellUniform);
 }
 
 void SceneA1TakeTwo::Update(double deltaTime)
@@ -78,8 +78,8 @@ void SceneA1TakeTwo::Render()
 
 void SceneA1TakeTwo::RenderGrid()
 {
-    auto gridSize = _leftTeamGrid.GetGridSize();
-    auto cellSize = _leftTeamGrid.GetCellSize();
+    auto gridSize = _leftTeamGrid.getGridSize();
+    auto cellSize = _leftTeamGrid.getCellSize();
     modelStack.PushMatrix();
 
     modelStack.Scale(cellSize.first, cellSize.second,1);
@@ -161,7 +161,7 @@ unsigned SceneA1TakeTwo::LoadImage(const char* filepath)
 template<typename T>
 void SceneA1TakeTwo::SpawnEnemyAt(Mesh* mesh, const Vector3 &pos, GridSystem &team)
 {
-    auto ent = team.SpawnEntity(mesh,pos);
+    auto ent = team.spawnEntity(mesh, pos);
     FSM* fsm = new T(ent);
     _fsms.emplace_back(fsm);
 }

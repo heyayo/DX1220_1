@@ -19,36 +19,36 @@ class GridSystem
 
     CellData* _grid = nullptr;
 
-    int getCellIndexFromEntity(Entity* ent) const;
-    int getCellIndexFromPosition(const Vector3& pos) const;
-    int aboveIndex(int index);
-    int bottomIndex(int index);
-    int leftIndex(int index);
-    int rightIndex(int index);
-    Entity* spiralSearch(Entity* ent, int startingIndex, int depth);
-    Entity* checkForCandidate(Entity* ent, int index);
+    int GetCellIndexFromEntity(Entity* ent) const;
+    int GetCellIndexFromPosition(const Vector3& pos) const;
+    int AboveIndex(int index);
+    int BottomIndex(int index);
+    int LeftIndex(int index);
+    int RightIndex(int index);
+    Entity* SpiralSearch(Entity* ent, int startingIndex, int depth);
+    Entity* CheckForCandidate(Entity* ent, int index);
 
-    std::vector<Entity*>::iterator getEntityIteratorFromCell(Entity* ent, int index);
+    std::vector<Entity*>::iterator GetEntityIteratorFromCell(Entity* ent, int index);
 
 public:
-    void Init(int gridWidth, int gridHeight, float cellWidth, float cellHeight);
+    void init(int gridWidth, int gridHeight, float cellWidth, float cellHeight);
 
-    constexpr int CellCount() const
+    constexpr int cellCount() const
     { return _gridWidth * _gridHeight; }
-    constexpr CellData* GetGrid()
+    constexpr CellData* getGrid()
     { return _grid; }
-    constexpr std::pair<int,int> GetGridSize() const
+    constexpr std::pair<int,int> getGridSize() const
     { return {_gridWidth, _gridHeight }; }
-    constexpr std::pair<float,float> GetCellSize() const
+    constexpr std::pair<float,float> getCellSize() const
     { return { _cellWidth, _cellHeight }; }
 
-    Entity* SpawnEntity(Mesh* mesh);
-    Entity* SpawnEntity(Mesh* mesh, const Vector3& loc);
+    Entity* spawnEntity(Mesh* mesh);
+    Entity* spawnEntity(Mesh* mesh, const Vector3& loc);
 
-    void MoveEntity(Entity* ent, const Vector3& offset);
-    void TeleportEntity(Entity* ent, const Vector3& newPos);
+    void moveEntity(Entity* ent, const Vector3& offset);
+    void teleportEntity(Entity* ent, const Vector3& newPos);
 
-    Entity* FindClosestEntity(Entity* ent, int radius);
+    Entity* findClosestEntity(Entity* ent, int radius);
 };
 
 
