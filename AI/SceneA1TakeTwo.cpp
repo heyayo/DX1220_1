@@ -2,12 +2,14 @@
 
 #include "Application.h"
 #include "MeshBuilder.h"
-#include "GridSystem.hpp"
 
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
 
 #define UnpackVector(vec) vec.x,vec.y,vec.z
+
+GridSystem SceneA1TakeTwo::_leftTeamGrid;
+GridSystem SceneA1TakeTwo::_rightTeamGrid;
 
 void SceneA1TakeTwo::Init()
 {
@@ -48,7 +50,8 @@ void SceneA1TakeTwo::Init()
 
     // Initialize Grid System
     float cellUniform = Application::GetWindowHeight()/30;
-    GridSystem::GetInstance().Init(30,30,cellUniform,cellUniform);
+    _leftTeamGrid.Init(30,30,cellUniform,cellUniform);
+    _rightTeamGrid.Init(30,30,cellUniform,cellUniform);
 }
 
 void SceneA1TakeTwo::Update(double deltaTime)
@@ -75,8 +78,8 @@ void SceneA1TakeTwo::Render()
 
 void SceneA1TakeTwo::RenderGrid()
 {
-    auto gridSize = GridSystem::GetInstance().GetGridSize();
-    auto cellSize = GridSystem::GetInstance().GetCellSize();
+    auto gridSize = _leftTeamGrid.GetGridSize();
+    auto cellSize = _leftTeamGrid.GetCellSize();
     modelStack.PushMatrix();
 
     modelStack.Scale(cellSize.first, cellSize.second,1);
@@ -156,9 +159,9 @@ unsigned SceneA1TakeTwo::LoadImage(const char* filepath)
 }
 
 template<typename T>
-void SceneA1TakeTwo::SpawnEnemyAt(Mesh* mesh, const Vector3 &pos)
+void SceneA1TakeTwo::SpawnEnemyAt(Mesh* mesh, const Vector3 &pos, GridSystem &team)
 {
-    auto ent = GridSystem::GetInstance().SpawnEntity(mesh,pos);
+    auto ent = team.SpawnEntity(mesh,pos);
     FSM* fsm = new T(ent);
     _fsms.emplace_back(fsm);
 }

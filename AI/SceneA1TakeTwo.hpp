@@ -4,6 +4,7 @@
 #include "SceneBase.h"
 
 #include "FSMs/Fsm.hpp"
+#include "GridSystem.hpp"
 
 class SceneA1TakeTwo : public SceneBase
 {
@@ -14,6 +15,9 @@ class SceneA1TakeTwo : public SceneBase
     Mesh* _blackSquareMesh;
     Mesh* _meleeUnitMesh;
 
+    static GridSystem _leftTeamGrid;
+    static GridSystem _rightTeamGrid;
+
     unsigned LoadImage(const char* filepath);
     void MoveCamera(const Vector3& offset);
 
@@ -22,7 +26,7 @@ class SceneA1TakeTwo : public SceneBase
     std::vector<FSM> _fsms;
 
     template<typename T>
-    void SpawnEnemyAt(Mesh* mesh, const Vector3& pos);
+    void SpawnEnemyAt(Mesh* mesh, const Vector3 &pos, GridSystem &team);
 
 public:
     virtual void Init();

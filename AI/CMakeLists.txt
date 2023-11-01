@@ -15,8 +15,8 @@ add_executable(
         GridSystem.hpp
         SceneA1TakeTwo.cpp
         SceneA1TakeTwo.hpp
-        FSMs/MeleeUnitFsm.cpp
-        FSMs/MeleeUnitFsm.hpp
+        FSMs/MeleeStates.cpp
+        FSMs/MeleeStates.hpp
 )
 
 target_include_directories(AIEXEC PUBLIC ${CMAKE_SOURCE_DIR}/Common/)

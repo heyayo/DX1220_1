@@ -7,7 +7,7 @@
 
 class GridSystem
 {
-    struct TileData
+    struct CellData
     {
         std::vector<Entity*> entities;
     };
@@ -17,22 +17,30 @@ class GridSystem
     float _cellWidth = 0.f;
     float _cellHeight = 0.f;
 
-    TileData* _grid = nullptr;
+    CellData* _grid = nullptr;
 
-    int GetIndexOfEntity(Entity* ent) const;
-    int GetIndexFromPosition(const Vector3& pos) const;
+    int getCellIndexFromEntity(Entity* ent) const;
+    int getCellIndexFromPosition(const Vector3& pos) const;
+    int aboveIndex(int index);
+    int bottomIndex(int index);
+    int leftIndex(int index);
+    int rightIndex(int index);
+    Entity* spiralSearch(Entity* ent, int startingIndex, int depth);
+    Entity* checkForCandidate(Entity* ent, int index);
 
-    std::vector<Entity*>::iterator GetEntityGridLocation(Entity* ent, int index);
+    std::vector<Entity*>::iterator getEntityIteratorFromCell(Entity* ent, int index);
 
 public:
-    static GridSystem& GetInstance();
-
     void Init(int gridWidth, int gridHeight, float cellWidth, float cellHeight);
 
     constexpr int CellCount() const
     { return _gridWidth * _gridHeight; }
-    constexpr TileData* GetGrid()
+    constexpr CellData* GetGrid()
     { return _grid; }
+    constexpr std::pair<int,int> GetGridSize() const
+    { return {_gridWidth, _gridHeight }; }
+    constexpr std::pair<float,float> GetCellSize() const
+    { return { _cellWidth, _cellHeight }; }
 
     Entity* SpawnEntity(Mesh* mesh);
     Entity* SpawnEntity(Mesh* mesh, const Vector3& loc);
@@ -40,10 +48,7 @@ public:
     void MoveEntity(Entity* ent, const Vector3& offset);
     void TeleportEntity(Entity* ent, const Vector3& newPos);
 
-    constexpr std::pair<int,int> GetGridSize() const
-    { return {_gridWidth, _gridHeight }; }
-    constexpr std::pair<float,float> GetCellSize() const
-    { return { _cellWidth, _cellHeight }; }
+    Entity* FindClosestEntity(Entity* ent, int radius);
 };
 
 

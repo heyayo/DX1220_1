@@ -3,8 +3,6 @@
 #include "Application.h"
 #include "MeshBuilder.h"
 
-#include "FSMs/MeleeUnitFsm.hpp"
-
 #include "GL/glew.h"
 
 #define UnpackVector(vec) vec.x,vec.y,vec.z
@@ -126,14 +124,10 @@ void SceneA1::MouseSpawnEntity()
 		if (worldCoords.first > _gridWidth*0.5f)
         {
             _leftTeam.emplace_back(temp);
-            MeleeUnitFSM* fsm = new MeleeUnitFSM(temp,_rightTeam);
-            _fsms.emplace_back(fsm);
         }
 		else
         {
             _rightTeam.emplace_back(temp);
-            MeleeUnitFSM* fsm = new MeleeUnitFSM(temp,_leftTeam);
-            _fsms.emplace_back(fsm);
         }
 
         /*

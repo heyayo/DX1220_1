@@ -4,25 +4,25 @@
 #include "Entities/entity.hpp"
 #include <vector>
 
+struct STATE
+{
+    virtual void Update(double deltaTime) = 0;
+    virtual STATE* StateChanger() = 0;
+};
+
 class FSM
 {
-    int _state = 0;
+    STATE* _state;
     Entity* owner;
-
-protected:
-    Entity* _target;
-    float _moveSpeed;
 
 public:
     FSM(Entity* o);
     virtual ~FSM() = default;
 
-    template<typename T>
-    void ChangeState(T state)
-    { _state = static_cast<int>(state); }
-    template<typename T>
-    T GetCurrentState()
-    { return static_cast<T>(_state); }
+    constexpr void ChangeState(STATE* state)
+    { _state = state; }
+    STATE* GetCurrentState()
+    { return _state; }
 
     Entity* GetOwner();
 
