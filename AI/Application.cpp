@@ -49,6 +49,7 @@ bool Application::IsKeyPressed(unsigned short key)
     return glfwGetKey(m_window,key);
     //return ((GetAsyncKeyState(key) & 0x8001) != 0);
 }
+
 bool Application::IsMousePressed(unsigned short key) //0 - Left, 1 - Right, 2 - Middle
 {
 	return glfwGetMouseButton(m_window, key) != 0;

@@ -2,6 +2,14 @@
 
 #include <algorithm>
 
+GridSystem::~GridSystem()
+{
+	if (_grid)
+		delete[] _grid;
+	for (auto e : _allEntities)
+		if (e) delete e;
+}
+
 void GridSystem::init(int gridWidth, int gridHeight, float cellWidth, float cellHeight)
 {
     _gridWidth = gridWidth;
@@ -27,6 +35,7 @@ Entity* GridSystem::spawnEntity(Mesh* mesh, const Vector3 &loc)
 {
     auto ent = new Entity(mesh);
     _grid[0].entities.emplace_back(ent);
+	_allEntities.emplace_back(ent);
     teleportEntity(ent,loc);
     return ent;
 }

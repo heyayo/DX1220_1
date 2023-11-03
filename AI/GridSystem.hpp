@@ -17,6 +17,7 @@ class GridSystem
     float _cellWidth = 0.f;
     float _cellHeight = 0.f;
 
+	std::vector<Entity*> _allEntities;
     CellData* _grid = nullptr;
 
     int GetCellIndexFromEntity(Entity* ent) const;
@@ -31,6 +32,8 @@ class GridSystem
     std::vector<Entity*>::iterator GetEntityIteratorFromCell(Entity* ent, int index);
 
 public:
+	~GridSystem();
+	
     void init(int gridWidth, int gridHeight, float cellWidth, float cellHeight);
 
     constexpr int cellCount() const
@@ -41,7 +44,9 @@ public:
     { return {_gridWidth, _gridHeight }; }
     constexpr std::pair<float,float> getCellSize() const
     { return { _cellWidth, _cellHeight }; }
-
+	constexpr const std::vector<Entity*>& getAllEntities()
+	{ return _allEntities; }
+	
     Entity* spawnEntity(Mesh* mesh);
     Entity* spawnEntity(Mesh* mesh, const Vector3& loc);
 

@@ -7,6 +7,7 @@
 #include "GLFW/glfw3.h"
 
 #define UnpackVector(vec) vec.x,vec.y,vec.z
+#define PrintVector(vec) std::cout << vec.x << ',' << vec.y << ',' << vec.z << std::endl;
 
 GridSystem SceneA1TakeTwo::_leftTeamGrid;
 GridSystem SceneA1TakeTwo::_rightTeamGrid;
@@ -52,10 +53,18 @@ void SceneA1TakeTwo::Init()
     float cellUniform = Application::GetWindowHeight()/30;
     _leftTeamGrid.init(30, 30, cellUniform, cellUniform);
     _rightTeamGrid.init(30, 30, cellUniform, cellUniform);
+	
+	_testEnt1 = _leftTeamGrid.spawnEntity(_meleeUnitMesh,{20,20,2});
+	_testEnt1->setScale({50,50,50});
+	_testEnt2 = _leftTeamGrid.spawnEntity(_meleeUnitMesh,{20,40,2});
+	_testEnt2->setScale({50,50,50});
+	_testEnt3 = _leftTeamGrid.spawnEntity(_meleeUnitMesh,{40,20,2});
+	_testEnt3->setScale({50,50,50});
 }
 
 void SceneA1TakeTwo::Update(double deltaTime)
 {
+	static int radius = 1;
     float camSpeed = static_cast<float>(deltaTime) * 100.f;
     if (Application::IsKeyPressed(GLFW_KEY_A))
         MoveCamera({-camSpeed,0,0});
@@ -66,14 +75,32 @@ void SceneA1TakeTwo::Update(double deltaTime)
     if (Application::IsKeyPressed(GLFW_KEY_W))
         MoveCamera({0,camSpeed,0});
 
+	if (Application::IsMouseJustPressed(1))
+	{
+		Entity* result = _leftTeamGrid.findClosestEntity(_testEnt1,radius);
+		if (result)
+		{
+			std::cout << result->getMesh()->name << std::endl;
+			PrintVector(result->getPosition());
+		}
+		else std::cout << "No Find" << std::endl;
+		std::cout << "Radius: " << radius << std::endl;
+	}
+	if (Application::IsKeyPressed(GLFW_KEY_UP))
+		++radius;
+	if (Application::IsKeyPressed(GLFW_KEY_DOWN))
+		--radius;
+	/*
     for (auto& fsm : _fsms)
         fsm.Update(deltaTime);
+	 */
 }
 
 void SceneA1TakeTwo::Render()
 {
     SceneBase::Render();
     RenderGrid();
+	RenderEntities();
 }
 
 void SceneA1TakeTwo::RenderGrid()
@@ -98,6 +125,18 @@ void SceneA1TakeTwo::RenderGrid()
     }
 
     modelStack.PopMatrix();
+}
+
+void SceneA1TakeTwo::RenderEntities()
+{
+	for (auto e : _leftTeamGrid.getAllEntities())
+	{
+		modelStack.PushMatrix();
+		modelStack.Translate(UnpackVector(e->getPosition()));
+		modelStack.Scale(UnpackVector(e->getScale()));
+		RenderMesh(e->getMesh(),false);
+		modelStack.PopMatrix();
+	}
 }
 
 void SceneA1TakeTwo::Exit()
@@ -162,6 +201,6 @@ template<typename T>
 void SceneA1TakeTwo::SpawnEnemyAt(Mesh* mesh, const Vector3 &pos, GridSystem &team)
 {
     auto ent = team.spawnEntity(mesh, pos);
-    FSM* fsm = new T(ent);
+    T* fsm = new T(ent);
     _fsms.emplace_back(fsm);
 }

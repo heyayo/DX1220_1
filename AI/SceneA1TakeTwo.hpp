@@ -17,11 +17,13 @@ class SceneA1TakeTwo : public SceneBase
 
     static GridSystem _leftTeamGrid;
     static GridSystem _rightTeamGrid;
+	Entity* _testEnt1 = nullptr, * _testEnt2 = nullptr, * _testEnt3 = nullptr;
 
     unsigned LoadImage(const char* filepath);
     void MoveCamera(const Vector3& offset);
 
     void RenderGrid();
+	void RenderEntities();
 
     std::vector<FSM> _fsms;
 
