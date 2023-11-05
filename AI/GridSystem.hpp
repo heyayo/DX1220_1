@@ -27,7 +27,9 @@ class GridSystem
     int LeftIndex(int index);
     int RightIndex(int index);
     Entity* SpiralSearch(Entity* ent, int startingIndex, int depth);
+	Entity* SpiralSearch(Entity* ent, const char* tag, int startingIndex, int depth);
     Entity* CheckForCandidate(Entity* ent, int index);
+    Entity* CheckForCandidate(Entity* ent, const char* tag, int index);
 
     std::vector<Entity*>::iterator GetEntityIteratorFromCell(Entity* ent, int index);
 
@@ -47,13 +49,15 @@ public:
 	constexpr const std::vector<Entity*>& getAllEntities()
 	{ return _allEntities; }
 	
-    Entity* spawnEntity(Mesh* mesh);
-    Entity* spawnEntity(Mesh* mesh, const Vector3& loc);
+    Entity* spawnEntity(Mesh* mesh, unsigned tex);
+    Entity* spawnEntity(Mesh* mesh, unsigned tex, const Vector3& loc);
 
     void moveEntity(Entity* ent, const Vector3& offset);
+	void moveEntityAlongGrid(Entity* ent, const Vector3& loc, float tileSpeed);
     void teleportEntity(Entity* ent, const Vector3& newPos);
 
     Entity* findClosestEntity(Entity* ent, int radius);
+	Entity* findClosestEntity(Entity* ent, const char* tag, int radius);
 };
 
 

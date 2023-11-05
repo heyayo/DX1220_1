@@ -1,6 +1,6 @@
 #include "entity.hpp"
 
-Entity::Entity(Mesh* mesh) : _mesh(mesh)
+Entity::Entity(Mesh* mesh,unsigned tex) : _mesh(mesh), _texture(tex)
 {
 
 }

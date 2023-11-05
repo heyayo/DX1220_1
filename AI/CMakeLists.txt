@@ -9,15 +9,12 @@ endif ()
 add_executable(
         AIEXEC
         ${SOURCE_FILES}
-        scenea1.cpp Entities/entity.cpp
-        FSMs/Fsm.cpp
+        Entities/entity.cpp
         GridSystem.cpp
         GridSystem.hpp
         SceneA1TakeTwo.cpp
         SceneA1TakeTwo.hpp
-        FSMs/MeleeStates.cpp
-        FSMs/MeleeStates.hpp
-)
+        FSMs/statemachine.cpp FSMs/statemachine.hpp FSMs/state.cpp FSMs/state.hpp FSMs/birdai.cpp FSMs/birdai.hpp)
 
 target_include_directories(AIEXEC PUBLIC ${CMAKE_SOURCE_DIR}/Common/)
 target_include_directories(AIEXEC PUBLIC ${CMAKE_SOURCE_DIR}/include/)

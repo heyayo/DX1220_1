@@ -10,7 +10,7 @@
 Vector3 SceneA1::_tileSize;
 std::vector<Entity*> SceneA1::_leftTeam;
 std::vector<Entity*> SceneA1::_rightTeam;
-std::vector<FSM*> SceneA1::_fsms;
+//std::vector<FSM*> SceneA1::_fsms;
 std::queue<SceneA1::PhysEvent> SceneA1::physicsEventQueue;
 SceneA1::TileData SceneA1::_gridData[_gridXSize * _gridYSize];
 
@@ -89,10 +89,10 @@ void SceneA1::Update(double dt)
 
     MouseSpawnEntity();
 
-    for (auto& fsm : _fsms)
-    {
-        fsm->Update(dt);
-    }
+//    for (auto& fsm : _fsms)
+//    {
+//        fsm->Update(dt);
+//    }
 }
 
 void SceneA1::MouseSpawnEntity()
@@ -114,21 +114,21 @@ void SceneA1::MouseSpawnEntity()
 		std::cout << worldCoords.first << ',' << worldCoords.second << std::endl;
 		
 		// Allocate Entity and Assign Team
-		Entity* temp = new Entity(_meleeUnitMesh);
-		temp->setPosition(
-			{static_cast<float>(worldCoords.first),
-			 static_cast<float>(worldCoords.second),2});
-		temp->setScale({50,50,50});
-
-		// Assign Left or Right Team based on Grid Location
-		if (worldCoords.first > _gridWidth*0.5f)
-        {
-            _leftTeam.emplace_back(temp);
-        }
-		else
-        {
-            _rightTeam.emplace_back(temp);
-        }
+//		Entity* temp = new Entity(_meleeUnitMesh);
+//		temp->setPosition(
+//			{static_cast<float>(worldCoords.first),
+//			 static_cast<float>(worldCoords.second),2});
+//		temp->setScale({50,50,50});
+//
+//		// Assign Left or Right Team based on Grid Location
+//		if (worldCoords.first > _gridWidth*0.5f)
+//        {
+//            _leftTeam.emplace_back(temp);
+//        }
+//		else
+//        {
+//            _rightTeam.emplace_back(temp);
+//        }
 
         /*
          * Not using Grid Physics Anymore
@@ -239,8 +239,8 @@ void SceneA1::Exit()
 		delete x;
 	for (auto& x : _rightTeam)
 		delete x;
-    for (auto& x : _fsms)
-        delete x;
+//    for (auto& x : _fsms)
+//        delete x;
 }
 
 void SceneA1::MoveCamera(const Vector3& offset)
@@ -397,6 +397,8 @@ int SceneA1::SpiralSearch(int radius, int startingIndex)
         now = AboveIndex(now);
         if (tileCheck(now)) return now;
     }
+	
+	return now;
 }
 
 Entity* SceneA1::BruteForceFindCloseEntities(const std::vector<Entity*> team, const Vector3& from)

@@ -5,7 +5,6 @@
 #include "MatrixStack.h"
 
 #include "Entities/entity.hpp"
-#include "FSMs/Fsm.hpp"
 
 #include <queue>
 
@@ -32,7 +31,7 @@ class SceneA1 : public SceneBase
     static TileData _gridData[_gridXSize * _gridYSize];
 	static std::vector<Entity*> _leftTeam;
 	static std::vector<Entity*> _rightTeam;
-    static std::vector<FSM*> _fsms;
+    //static std::vector<FSM*> _fsms;
 
 	void MoveCamera(const Vector3& offset);
 	

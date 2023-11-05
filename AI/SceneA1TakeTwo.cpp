@@ -9,8 +9,9 @@
 #define UnpackVector(vec) vec.x,vec.y,vec.z
 #define PrintVector(vec) std::cout << vec.x << ',' << vec.y << ',' << vec.z << std::endl;
 
-GridSystem SceneA1TakeTwo::_leftTeamGrid;
-GridSystem SceneA1TakeTwo::_rightTeamGrid;
+//GridSystem SceneA1TakeTwo::_leftTeamGrid;
+//GridSystem SceneA1TakeTwo::_rightTeamGrid;
+GridSystem SceneA1TakeTwo::AllGrid;
 
 void SceneA1TakeTwo::Init()
 {
@@ -43,22 +44,23 @@ void SceneA1TakeTwo::Init()
     _blackSquareMesh = MeshBuilder::GenerateQuad(
             "BlackMesh",
             {0,0,0});
-    _meleeUnitMesh = MeshBuilder::GenerateQuad(
+	_normalSquareMesh = MeshBuilder::GenerateQuad(
             "MeleeUnit",
             {1,1,1}
     );
-    _meleeUnitMesh->textureID = LoadImage("Image/sword.png");
+	_birdTex = LoadImage("Image/berd.jpg");
 
     // Initialize Grid System
     float cellUniform = Application::GetWindowHeight()/30;
-    _leftTeamGrid.init(30, 30, cellUniform, cellUniform);
-    _rightTeamGrid.init(30, 30, cellUniform, cellUniform);
+//    _leftTeamGrid.init(30, 30, cellUniform, cellUniform);
+//    _rightTeamGrid.init(30, 30, cellUniform, cellUniform);
+    AllGrid.init(30, 30, cellUniform, cellUniform);
 	
-	_testEnt1 = _leftTeamGrid.spawnEntity(_meleeUnitMesh,{20,20,2});
+	_testEnt1 = AllGrid.spawnEntity(_normalSquareMesh, _birdTex, {20, 20, 2});
 	_testEnt1->setScale({50,50,50});
-	_testEnt2 = _leftTeamGrid.spawnEntity(_meleeUnitMesh,{20,40,2});
+	_testEnt2 = AllGrid.spawnEntity(_normalSquareMesh, _birdTex, {20, 200, 2});
 	_testEnt2->setScale({50,50,50});
-	_testEnt3 = _leftTeamGrid.spawnEntity(_meleeUnitMesh,{40,20,2});
+	_testEnt3 = AllGrid.spawnEntity(_normalSquareMesh, _birdTex, {200, 20, 2});
 	_testEnt3->setScale({50,50,50});
 }
 
@@ -77,7 +79,7 @@ void SceneA1TakeTwo::Update(double deltaTime)
 
 	if (Application::IsMouseJustPressed(1))
 	{
-		Entity* result = _leftTeamGrid.findClosestEntity(_testEnt1,radius);
+		Entity* result = AllGrid.findClosestEntity(_testEnt1,radius);
 		if (result)
 		{
 			std::cout << result->getMesh()->name << std::endl;
@@ -85,6 +87,13 @@ void SceneA1TakeTwo::Update(double deltaTime)
 		}
 		else std::cout << "No Find" << std::endl;
 		std::cout << "Radius: " << radius << std::endl;
+	}
+	if (Application::IsMousePressed(0))
+	{
+		auto pos = MousePosWorldSpace();
+		AllGrid.moveEntityAlongGrid(_testEnt1,
+									{static_cast<float>(pos.first),static_cast<float>(pos.second),2},
+									25*deltaTime);
 	}
 	if (Application::IsKeyPressed(GLFW_KEY_UP))
 		++radius;
@@ -105,8 +114,8 @@ void SceneA1TakeTwo::Render()
 
 void SceneA1TakeTwo::RenderGrid()
 {
-    auto gridSize = _leftTeamGrid.getGridSize();
-    auto cellSize = _leftTeamGrid.getCellSize();
+    auto gridSize = AllGrid.getGridSize();
+    auto cellSize = AllGrid.getCellSize();
     modelStack.PushMatrix();
 
     modelStack.Scale(cellSize.first, cellSize.second,1);
@@ -129,11 +138,12 @@ void SceneA1TakeTwo::RenderGrid()
 
 void SceneA1TakeTwo::RenderEntities()
 {
-	for (auto e : _leftTeamGrid.getAllEntities())
+	for (auto e : AllGrid.getAllEntities())
 	{
 		modelStack.PushMatrix();
 		modelStack.Translate(UnpackVector(e->getPosition()));
 		modelStack.Scale(UnpackVector(e->getScale()));
+		e->getMesh()->textureID = e->getTextureID();
 		RenderMesh(e->getMesh(),false);
 		modelStack.PopMatrix();
 	}
@@ -145,7 +155,7 @@ void SceneA1TakeTwo::Exit()
 
     delete _whiteSquareMesh;
     delete _blackSquareMesh;
-    delete _meleeUnitMesh;
+    delete _normalSquareMesh;
 }
 
 void SceneA1TakeTwo::MoveCamera(const Vector3& offset)
@@ -198,9 +208,33 @@ unsigned SceneA1TakeTwo::LoadImage(const char* filepath)
 }
 
 template<typename T>
-void SceneA1TakeTwo::SpawnEnemyAt(Mesh* mesh, const Vector3 &pos, GridSystem &team)
+void SceneA1TakeTwo::SpawnEntityAt(unsigned int tex, const Vector3 &pos, GridSystem &team)
 {
-    auto ent = team.spawnEntity(mesh, pos);
+    auto ent = team.spawnEntity(_normalSquareMesh,tex);
     T* fsm = new T(ent);
-    _fsms.emplace_back(fsm);
+	// TODO FINISH
+}
+
+void SceneA1TakeTwo::KillEntity()
+{
+
+}
+
+std::pair<double, double> SceneA1TakeTwo::MousePos()
+{
+	double x,y;
+	Application::GetCursorPos(&x,&y);
+	y = Application::GetWindowHeight() - y;
+	return {x,y};
+}
+
+std::pair<double, double> SceneA1TakeTwo::ScreenToWorldSpace(double x, double y)
+{
+	return {x + camera.position.x, y + camera.position.y};
+}
+
+std::pair<double, double> SceneA1TakeTwo::MousePosWorldSpace()
+{
+	auto temp = MousePos();
+	return ScreenToWorldSpace(temp.first,temp.second);
 }
