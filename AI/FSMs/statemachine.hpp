@@ -7,6 +7,7 @@ struct State;
 
 class StateMachine
 {
+protected:
 	Entity* _owner;
 	State* _currentState;
 	

@@ -60,8 +60,10 @@ void SceneA1TakeTwo::Init()
 	_testEnt1->setScale({50,50,50});
 	_testEnt2 = AllGrid.spawnEntity(_normalSquareMesh, _birdTex, {20, 200, 2});
 	_testEnt2->setScale({50,50,50});
+    _testEnt2->setTag("Berd");
 	_testEnt3 = AllGrid.spawnEntity(_normalSquareMesh, _birdTex, {200, 20, 2});
 	_testEnt3->setScale({50,50,50});
+    _testEnt3->setTag("Berd");
 }
 
 void SceneA1TakeTwo::Update(double deltaTime)
@@ -79,7 +81,7 @@ void SceneA1TakeTwo::Update(double deltaTime)
 
 	if (Application::IsMouseJustPressed(1))
 	{
-		Entity* result = AllGrid.findClosestEntity(_testEnt1,radius);
+		Entity* result = AllGrid.findClosestEntity(_testEnt1,"Berd",{_testEnt2,_testEnt3},radius);
 		if (result)
 		{
 			std::cout << result->getMesh()->name << std::endl;
@@ -88,12 +90,20 @@ void SceneA1TakeTwo::Update(double deltaTime)
 		else std::cout << "No Find" << std::endl;
 		std::cout << "Radius: " << radius << std::endl;
 	}
-	if (Application::IsMousePressed(0))
+	if (Application::IsMouseJustPressed(0))
 	{
-		auto pos = MousePosWorldSpace();
-		AllGrid.moveEntityAlongGrid(_testEnt1,
-									{static_cast<float>(pos.first),static_cast<float>(pos.second),2},
-									25*deltaTime);
+        Entity* result = AllGrid.findClosestEntity(_testEnt1,"Berd",{_testEnt3},radius);
+        if (result)
+        {
+            std::cout << result->getMesh()->name << std::endl;
+            PrintVector(result->getPosition());
+        }
+        else std::cout << "No Find" << std::endl;
+        std::cout << "Radius: " << radius << std::endl;
+//		auto pos = MousePosWorldSpace();
+//		AllGrid.moveEntityAlongGrid(_testEnt1,
+//									{static_cast<float>(pos.first),static_cast<float>(pos.second),2},
+//									25*deltaTime);
 	}
 	if (Application::IsKeyPressed(GLFW_KEY_UP))
 		++radius;

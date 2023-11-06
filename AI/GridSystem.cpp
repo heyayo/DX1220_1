@@ -1,6 +1,7 @@
 #include "GridSystem.hpp"
 
 #include <algorithm>
+#include <cstring>
 
 GridSystem::~GridSystem()
 {
@@ -98,12 +99,48 @@ Entity* GridSystem::findClosestEntity(Entity* ent, const char* tag, int radius)
 		auto target = SpiralSearch(ent, tag, startingIndex, i);
 		if (target)
 		{
-			if (!strcmp(target->getTag(),tag))
+			if (!strcmp(target->getTag(),tag)) // TODO: Unnecessary strcmp | Remove and Test
 				return target;
 		}
 	}
 	
 	return nullptr;
+}
+
+Entity* GridSystem::findClosestEntity(Entity* ent, const std::vector<Entity*> &exceptions, int radius)
+{
+    int startingIndex = GetCellIndexFromEntity(ent);
+
+    for (int i = 1; i <= radius-1; ++i)
+    {
+        auto target = SpiralSearch(ent, exceptions, startingIndex, i);
+        if (target)
+            return target;
+    }
+
+    return nullptr;
+}
+
+Entity* GridSystem::findClosestEntity(Entity* ent, const char* tag, const std::vector<Entity*> &exceptions, int radius)
+{
+    int startingIndex = GetCellIndexFromEntity(ent);
+
+    for (int i = 1; i <= radius-1; ++i)
+    {
+        auto target = SpiralSearch(ent, tag, exceptions, startingIndex, i);
+        if (target)
+            return target;
+    }
+
+    return nullptr;
+}
+
+std::vector<Entity*> GridSystem::getAllWithTag(const char* tag)
+{
+    std::vector<Entity*> entities;
+    for (auto e : _allEntities)
+        if (!strcmp(e->getTag(),tag)) entities.emplace_back(e); // If Entity has same tag, add to vector
+    return entities;
 }
 
 Entity* GridSystem::SpiralSearch(Entity* ent, int startingIndex, int depth)
@@ -116,15 +153,15 @@ Entity* GridSystem::SpiralSearch(Entity* ent, int startingIndex, int depth)
 
     for (int i = 0; i < depth; ++i)
         curr = AboveIndex(curr);
-	if (curr >= grid_boundary)
-		returnVal           = nullptr;
+	if (curr >= grid_boundary || curr < 0)
+		returnVal = nullptr;
 	else
 	    returnVal = CheckForCandidate(ent, curr);
     if (returnVal) return returnVal;
     for (int i = 0; i < depth; ++i)
     {
         curr = RightIndex(curr); // Travel Index
-		if (curr >= grid_boundary) // Check if Index Goes Out of Bounds
+		if (curr >= grid_boundary || curr < 0) // Check if Index Goes Out of Bounds
 		{
 			returnVal = nullptr; // Set Found Entity to nullptr
 			continue; // Skip Candidate Checks | There are no Candidates | Continue instead of Break to keep continuity of Spiral Search
@@ -136,7 +173,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, int startingIndex, int depth)
     for (int i = 0; i < doubleDepth; ++i)
     {
         curr = BottomIndex(curr);
-		if (curr >= grid_boundary)
+		if (curr >= grid_boundary || curr < 0)
 		{
 			returnVal = nullptr;
 			continue;
@@ -148,7 +185,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, int startingIndex, int depth)
     for (int i = 0; i < doubleDepth; ++i)
     {
         curr = LeftIndex(curr);
-		if (curr >= grid_boundary)
+		if (curr >= grid_boundary || curr < 0)
 		{
 			returnVal = nullptr;
 			continue;
@@ -160,7 +197,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, int startingIndex, int depth)
     for (int i = 0; i < doubleDepth; ++i)
     {
         curr = AboveIndex(curr);
-		if (curr >= grid_boundary)
+		if (curr >= grid_boundary || curr < 0)
 		{
 			returnVal = nullptr;
 			continue;
@@ -172,7 +209,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, int startingIndex, int depth)
     for (int i = 0; i < depth; ++i)
     {
         curr = RightIndex(curr);
-		if (curr >= grid_boundary)
+		if (curr >= grid_boundary || curr < 0)
 		{
 			returnVal = nullptr;
 			continue;
@@ -195,12 +232,15 @@ Entity* GridSystem::SpiralSearch(Entity* ent, const char* tag, int startingIndex
 	
 	for (int i = 0; i < depth; ++i)
 		curr = AboveIndex(curr);
-	returnVal = CheckForCandidate(ent, tag, curr);
+    if (curr >= grid_boundary || curr < 0)
+        returnVal           = nullptr;
+    else
+        returnVal = CheckForCandidate(ent, tag, curr);
 	if (returnVal) return returnVal;
 	for (int i = 0; i < depth; ++i)
 	{
 		curr = RightIndex(curr);
-		if (curr >= grid_boundary)
+		if (curr >= grid_boundary || curr < 0)
 		{
 			returnVal = nullptr;
 			continue;
@@ -212,7 +252,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, const char* tag, int startingIndex
 	for (int i = 0; i < doubleDepth; ++i)
 	{
 		curr = BottomIndex(curr);
-		if (curr >= grid_boundary)
+		if (curr >= grid_boundary || curr < 0)
 		{
 			returnVal = nullptr;
 			continue;
@@ -224,7 +264,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, const char* tag, int startingIndex
 	for (int i = 0; i < doubleDepth; ++i)
 	{
 		curr = LeftIndex(curr);
-		if (curr >= grid_boundary)
+		if (curr >= grid_boundary || curr < 0)
 		{
 			returnVal = nullptr;
 			continue;
@@ -236,7 +276,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, const char* tag, int startingIndex
 	for (int i = 0; i < doubleDepth; ++i)
 	{
 		curr = AboveIndex(curr);
-		if (curr >= grid_boundary)
+		if (curr >= grid_boundary || curr < 0)
 		{
 			returnVal = nullptr;
 			continue;
@@ -248,7 +288,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, const char* tag, int startingIndex
 	for (int i = 0; i < depth; ++i)
 	{
 		curr = RightIndex(curr);
-		if (curr >= grid_boundary)
+		if (curr >= grid_boundary || curr < 0)
 		{
 			returnVal = nullptr;
 			continue;
@@ -259,6 +299,166 @@ Entity* GridSystem::SpiralSearch(Entity* ent, const char* tag, int startingIndex
 	}
 	
 	return returnVal;
+}
+
+// SpiralSearch considering exceptions
+Entity* GridSystem::SpiralSearch(Entity* ent, const std::vector<Entity*> &exceptions, int startingIndex, int depth)
+{
+    Entity* returnVal = nullptr;
+    const int grid_boundary = _gridWidth * _gridHeight;
+
+    int curr = startingIndex;
+    int doubleDepth = depth*2;
+
+    for (int i = 0; i < depth; ++i)
+        curr = AboveIndex(curr);
+    if (curr >= grid_boundary || curr < 0)
+        returnVal           = nullptr;
+    else
+        returnVal = CheckForCandidate(ent, exceptions, curr);
+    if (returnVal) return returnVal;
+    for (int i = 0; i < depth; ++i)
+    {
+        curr = RightIndex(curr); // Travel Index
+        if (curr >= grid_boundary || curr < 0) // Check if Index Goes Out of Bounds
+        {
+            returnVal = nullptr; // Set Found Entity to nullptr
+            continue; // Skip Candidate Checks | There are no Candidates | Continue instead of Break to keep continuity of Spiral Search
+        }
+        else
+            returnVal = CheckForCandidate(ent, exceptions, curr);
+        if (returnVal) return returnVal;
+    }
+    for (int i = 0; i < doubleDepth; ++i)
+    {
+        curr = BottomIndex(curr);
+        if (curr >= grid_boundary || curr < 0)
+        {
+            returnVal = nullptr;
+            continue;
+        }
+        else
+            returnVal = CheckForCandidate(ent, exceptions, curr);
+        if (returnVal) return returnVal;
+    }
+    for (int i = 0; i < doubleDepth; ++i)
+    {
+        curr = LeftIndex(curr);
+        if (curr >= grid_boundary || curr < 0)
+        {
+            returnVal = nullptr;
+            continue;
+        }
+        else
+            returnVal = CheckForCandidate(ent, exceptions, curr);
+        if (returnVal) return returnVal;
+    }
+    for (int i = 0; i < doubleDepth; ++i)
+    {
+        curr = AboveIndex(curr);
+        if (curr >= grid_boundary || curr < 0)
+        {
+            returnVal = nullptr;
+            continue;
+        }
+        else
+            returnVal = CheckForCandidate(ent, exceptions, curr);
+        if (returnVal) return returnVal;
+    }
+    for (int i = 0; i < depth; ++i)
+    {
+        curr = RightIndex(curr);
+        if (curr >= grid_boundary || curr < 0)
+        {
+            returnVal = nullptr;
+            continue;
+        }
+        else
+            returnVal = CheckForCandidate(ent, exceptions, curr);
+        if (returnVal) return returnVal;
+    }
+
+    return returnVal;
+}
+
+// SpiralSearch considering tag and exceptions
+Entity* GridSystem::SpiralSearch(Entity* ent, const char* tag, const std::vector<Entity*> &exceptions, int startingIndex, int depth)
+{
+    Entity* returnVal = nullptr;
+    const int grid_boundary = _gridWidth * _gridHeight;
+
+    int curr = startingIndex;
+    int doubleDepth = depth*2;
+
+    for (int i = 0; i < depth; ++i)
+        curr = AboveIndex(curr);
+    if (curr >= grid_boundary || curr < 0)
+        returnVal           = nullptr;
+    else
+        returnVal = CheckForCandidate(ent, exceptions, tag, curr);
+    if (returnVal) return returnVal;
+    for (int i = 0; i < depth; ++i)
+    {
+        curr = RightIndex(curr);
+        if (curr >= grid_boundary || curr < 0)
+        {
+            returnVal = nullptr;
+            continue;
+        }
+        else
+            returnVal = CheckForCandidate(ent, exceptions, tag, curr);
+        if (returnVal) return returnVal;
+    }
+    for (int i = 0; i < doubleDepth; ++i)
+    {
+        curr = BottomIndex(curr);
+        if (curr >= grid_boundary || curr < 0)
+        {
+            returnVal = nullptr;
+            continue;
+        }
+        else
+            returnVal = CheckForCandidate(ent, exceptions, tag, curr);
+        if (returnVal) return returnVal;
+    }
+    for (int i = 0; i < doubleDepth; ++i)
+    {
+        curr = LeftIndex(curr);
+        if (curr >= grid_boundary || curr < 0)
+        {
+            returnVal = nullptr;
+            continue;
+        }
+        else
+            returnVal = CheckForCandidate(ent, exceptions, tag, curr);
+        if (returnVal) return returnVal;
+    }
+    for (int i = 0; i < doubleDepth; ++i)
+    {
+        curr = AboveIndex(curr);
+        if (curr >= grid_boundary || curr < 0)
+        {
+            returnVal = nullptr;
+            continue;
+        }
+        else
+            returnVal = CheckForCandidate(ent, exceptions, tag, curr);
+        if (returnVal) return returnVal;
+    }
+    for (int i = 0; i < depth; ++i)
+    {
+        curr = RightIndex(curr);
+        if (curr >= grid_boundary || curr < 0)
+        {
+            returnVal = nullptr;
+            continue;
+        }
+        else
+            returnVal = CheckForCandidate(ent, exceptions, tag, curr);
+        if (returnVal) return returnVal;
+    }
+
+    return returnVal;
 }
 
 Entity* GridSystem::CheckForCandidate(Entity* ent, int index)
@@ -277,6 +477,44 @@ Entity* GridSystem::CheckForCandidate(Entity* ent, const char* tag, int index)
 		for (auto e : cell)
 		{ if (ent != e && !strcmp(e->getTag(),tag)) return e; }
 	return nullptr;
+}
+
+Entity* GridSystem::CheckForCandidate(Entity* ent, const std::vector<Entity*> &exceptions, int index)
+{
+    auto& cell = _grid[index].entities;
+    if (!cell.empty())
+        for (auto e : cell)
+        {
+            if (e == ent) continue;
+            bool cleanEntity = true;
+            for (auto ex : exceptions)
+            {
+                if (e == ex) cleanEntity = false;
+            }
+            if (cleanEntity) return e;
+        }
+    return nullptr;
+}
+
+Entity* GridSystem::CheckForCandidate(Entity* ent, const std::vector<Entity*> &exceptions, const char* tag, int index)
+{
+    auto& cell = _grid[index].entities;
+    if (!cell.empty())
+        for (auto e : cell)
+        {
+            if (e == ent) continue; // Prevent self return
+            bool cleanEntity = true;
+            for (auto ex : exceptions) // Prevent excepted Entities
+            {
+                if (e == ex)
+                {
+                    cleanEntity = false;
+                    break;
+                }
+            }
+            if (!strcmp(e->getTag(),tag) && cleanEntity) return e; // Tag Check and Return
+        }
+    return nullptr;
 }
 
 std::vector<Entity*>::iterator GridSystem::GetEntityIteratorFromCell(Entity* ent, int index)

@@ -28,8 +28,12 @@ class GridSystem
     int RightIndex(int index);
     Entity* SpiralSearch(Entity* ent, int startingIndex, int depth);
 	Entity* SpiralSearch(Entity* ent, const char* tag, int startingIndex, int depth);
+    Entity* SpiralSearch(Entity* ent, const std::vector<Entity*>& exceptions, int startingIndex, int depth);
+    Entity* SpiralSearch(Entity* ent, const char* tag, const std::vector<Entity*>& exceptions, int startingIndex, int depth);
     Entity* CheckForCandidate(Entity* ent, int index);
     Entity* CheckForCandidate(Entity* ent, const char* tag, int index);
+    Entity* CheckForCandidate(Entity* ent, const std::vector<Entity*>& exceptions, int index);
+    Entity* CheckForCandidate(Entity* ent, const std::vector<Entity*>& exceptions, const char* tag, int index);
 
     std::vector<Entity*>::iterator GetEntityIteratorFromCell(Entity* ent, int index);
 
@@ -58,6 +62,9 @@ public:
 
     Entity* findClosestEntity(Entity* ent, int radius);
 	Entity* findClosestEntity(Entity* ent, const char* tag, int radius);
+    Entity* findClosestEntity(Entity* ent, const std::vector<Entity*>& exceptions, int radius);
+    Entity* findClosestEntity(Entity* ent, const char* tag, const std::vector<Entity*>& exceptions, int radius);
+    std::vector<Entity*> getAllWithTag(const char* tag);
 };
 
 

@@ -5,6 +5,8 @@
 #include "state.hpp"
 #include "Entities/entity.hpp"
 
+#include <vector>
+
 struct MigrationState : public State
 {
 	MigrationState(StateMachine* stateMachine);
@@ -16,8 +18,24 @@ struct MigrationState : public State
 	Entity* tree;
 };
 
+struct PerchState : public State
+{
+    PerchState(StateMachine* stateMachine);
+
+    virtual void Update(double deltaTime) override;
+    virtual void Enter() override;
+    virtual void Exit() override;
+};
+
 class BirdAI : public StateMachine
 {
+    MigrationState _migState{this};
+    PerchState _perchState{this};
+
+    std::vector<Entity*> _trees;
+
+public:
+    BirdAI(Entity* o);
 };
 
 #endif
