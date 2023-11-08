@@ -35,10 +35,21 @@ Entity* GridSystem::spawnEntity(Mesh* mesh, unsigned tex)
 Entity* GridSystem::spawnEntity(Mesh* mesh, unsigned tex, const Vector3& loc)
 {
     auto ent = new Entity(mesh,tex);
+    ent->setScale({50,50,50});
     _grid[0].entities.emplace_back(ent);
 	_allEntities.emplace_back(ent);
     teleportEntity(ent,loc);
     return ent;
+}
+
+void GridSystem::despawnEntity(Entity* ent)
+{
+    int index = GetCellIndexFromEntity(ent);
+    auto iter = GetEntityIteratorFromCell(ent, index);
+    auto allIter = std::find(_allEntities.begin(),_allEntities.end(),ent);
+    _grid[index].entities.erase(iter); // Remove from Grid Data Structure
+    _allEntities.erase(allIter); // Remove from Entity Tracker
+    delete ent; // Free Memory
 }
 
 // Moves Entity by Vector
@@ -139,7 +150,7 @@ std::vector<Entity*> GridSystem::getAllWithTag(const char* tag)
 {
     std::vector<Entity*> entities;
     for (auto e : _allEntities)
-        if (!strcmp(e->getTag(),tag)) entities.emplace_back(e); // If Entity has same tag, add to vector
+        if (!strcmp(e->getTag(),tag)) entities.push_back(e); // If Entity has same tag, add to vector
     return entities;
 }
 

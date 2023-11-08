@@ -14,6 +14,8 @@
 #include "SceneMovement.h"
 #include "SceneTicTacToe.h"
 
+std::mt19937 Application::randomthing;
+
 GLFWwindow* m_window;
 const unsigned char FPS = 60; // FPS of this game
 const unsigned int frameTime = 1000 / FPS; // time for each frame
@@ -132,6 +134,9 @@ void Application::Init()
 		fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
 		//return -1;
 	}
+
+    std::random_device rd;
+    randomthing.seed(rd());
 }
 
 #include "SceneA1TakeTwo.hpp"

@@ -6,6 +6,8 @@
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
 
+#include <algorithm>
+
 #define UnpackVector(vec) vec.x,vec.y,vec.z
 #define PrintVector(vec) std::cout << vec.x << ',' << vec.y << ',' << vec.z << std::endl;
 
@@ -49,6 +51,7 @@ void SceneA1TakeTwo::Init()
             {1,1,1}
     );
 	_birdTex = LoadImage("Image/berd.jpg");
+    _treeTex = LoadImage("Image/tree.jpg");
 
     // Initialize Grid System
     float cellUniform = Application::GetWindowHeight()/30;
@@ -57,13 +60,19 @@ void SceneA1TakeTwo::Init()
     AllGrid.init(30, 30, cellUniform, cellUniform);
 	
 	_testEnt1 = AllGrid.spawnEntity(_normalSquareMesh, _birdTex, {20, 20, 2});
-	_testEnt1->setScale({50,50,50});
 	_testEnt2 = AllGrid.spawnEntity(_normalSquareMesh, _birdTex, {20, 200, 2});
-	_testEnt2->setScale({50,50,50});
     _testEnt2->setTag("Berd");
 	_testEnt3 = AllGrid.spawnEntity(_normalSquareMesh, _birdTex, {200, 20, 2});
-	_testEnt3->setScale({50,50,50});
     _testEnt3->setTag("Berd");
+
+    for (int i = 0; i < 4; ++i)
+    {
+        presetTrees[i] = AllGrid.spawnEntity(_normalSquareMesh,_treeTex,{(50.f * i) + 50.f,200,2});
+        presetTrees[i]->setTag("Tree");
+    }
+
+    auto trees = AllGrid.getAllWithTag("Tree");
+    std::cout << "Fetched Trees | Size: " << trees.size() << std::endl;
 }
 
 void SceneA1TakeTwo::Update(double deltaTime)
@@ -90,20 +99,20 @@ void SceneA1TakeTwo::Update(double deltaTime)
 		else std::cout << "No Find" << std::endl;
 		std::cout << "Radius: " << radius << std::endl;
 	}
-	if (Application::IsMouseJustPressed(0))
+	if (Application::IsMousePressed(0))
 	{
-        Entity* result = AllGrid.findClosestEntity(_testEnt1,"Berd",{_testEnt3},radius);
-        if (result)
-        {
-            std::cout << result->getMesh()->name << std::endl;
-            PrintVector(result->getPosition());
-        }
-        else std::cout << "No Find" << std::endl;
-        std::cout << "Radius: " << radius << std::endl;
-//		auto pos = MousePosWorldSpace();
-//		AllGrid.moveEntityAlongGrid(_testEnt1,
-//									{static_cast<float>(pos.first),static_cast<float>(pos.second),2},
-//									25*deltaTime);
+//        Entity* result = AllGrid.findClosestEntity(_testEnt1,"Berd",{_testEnt3},radius);
+//        if (result)
+//        {
+//            std::cout << result->getMesh()->name << std::endl;
+//            PrintVector(result->getPosition());
+//        }
+//        else std::cout << "No Find" << std::endl;
+//        std::cout << "Radius: " << radius << std::endl;
+		auto pos = MousePosWorldSpace();
+		AllGrid.moveEntityAlongGrid(_testEnt1,
+									{static_cast<float>(pos.first),static_cast<float>(pos.second),2},
+									25*deltaTime);
 	}
 	if (Application::IsKeyPressed(GLFW_KEY_UP))
 		++radius;
@@ -155,6 +164,7 @@ void SceneA1TakeTwo::RenderEntities()
 		modelStack.Scale(UnpackVector(e->getScale()));
 		e->getMesh()->textureID = e->getTextureID();
 		RenderMesh(e->getMesh(),false);
+        e->getMesh()->textureID = 0;
 		modelStack.PopMatrix();
 	}
 }
@@ -218,16 +228,41 @@ unsigned SceneA1TakeTwo::LoadImage(const char* filepath)
 }
 
 template<typename T>
-void SceneA1TakeTwo::SpawnEntityAt(unsigned int tex, const Vector3 &pos, GridSystem &team)
+void SceneA1TakeTwo::SpawnEntityAt(unsigned int tex, const Vector3 &pos)
 {
-    auto ent = team.spawnEntity(_normalSquareMesh,tex);
-    T* fsm = new T(ent);
-	// TODO FINISH
+    AllGrid.spawnEntity(_whiteSquareMesh,tex,pos);
 }
 
-void SceneA1TakeTwo::KillEntity()
+template<typename T, typename... ARGS>
+void SceneA1TakeTwo::AttachAIToEntity(Entity* ent, ARGS... a)
 {
+    StateMachine* machine = new T(ent, a...);
+    _sms.emplace_back(machine);
+}
 
+void SceneA1TakeTwo::KillAI(StateMachine* machine)
+{
+    // Find StateMachine in Structure
+    auto iter = std::find(_sms.begin(),_sms.end(),machine);
+    _sms.erase(iter);
+
+    // Kill Entity and Free StateMachine Memory
+    AllGrid.despawnEntity(machine->getOwner());
+    delete machine;
+}
+
+void SceneA1TakeTwo::KillAI(Entity* ent)
+{
+    // Search All AIs if they are owned by an Entity
+    auto searchTerm = [&](StateMachine* i){ return i->getOwner() == ent; };
+    auto iter = std::find_if(_sms.begin(),_sms.end(),searchTerm);
+
+    // Remove StateMachine
+    delete (*iter);
+    _sms.erase(iter);
+
+    // Kill Entity
+    AllGrid.despawnEntity(ent);
 }
 
 std::pair<double, double> SceneA1TakeTwo::MousePos()

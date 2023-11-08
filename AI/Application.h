@@ -4,6 +4,8 @@
 
 #include "timer.h"
 
+#include <random>
+
 class Application
 {
 public:
@@ -21,6 +23,8 @@ public:
 	static void GetCursorPos(double *xpos, double *ypos);
 	static int GetWindowWidth();
 	static int GetWindowHeight();
+
+    static std::mt19937 randomthing;
 
 private:
 	Application();

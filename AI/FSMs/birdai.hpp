@@ -35,7 +35,7 @@ class BirdAI : public StateMachine
     std::vector<Entity*> _trees;
 
 public:
-    BirdAI(Entity* o);
+    BirdAI(Entity* o, const std::vector<Entity*>& trees);
 };
 
 #endif

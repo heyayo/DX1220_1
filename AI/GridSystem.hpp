@@ -55,6 +55,7 @@ public:
 	
     Entity* spawnEntity(Mesh* mesh, unsigned tex);
     Entity* spawnEntity(Mesh* mesh, unsigned tex, const Vector3& loc);
+    void despawnEntity(Entity* ent);
 
     void moveEntity(Entity* ent, const Vector3& offset);
 	void moveEntityAlongGrid(Entity* ent, const Vector3& loc, float tileSpeed);
