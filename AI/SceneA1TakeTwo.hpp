@@ -19,9 +19,8 @@ class SceneA1TakeTwo : public SceneBase
 
 //    static GridSystem _leftTeamGrid;
 //    static GridSystem _rightTeamGrid;
-	Entity* _testEnt1 = nullptr, * _testEnt2 = nullptr, * _testEnt3 = nullptr;
     std::vector<StateMachine*> _sms;
-    Entity* presetTrees[4];
+    Entity* _presetTrees[4];
 
     unsigned LoadImage(const char* filepath);
     void MoveCamera(const Vector3& offset);
@@ -33,8 +32,6 @@ class SceneA1TakeTwo : public SceneBase
     void RenderGrid();
 	void RenderEntities();
 
-    template<typename T>
-    void SpawnEntityAt(unsigned int tex, const Vector3 &pos);
     template<typename T, typename... ARGS>
     void AttachAIToEntity(Entity* ent, ARGS... a);
 	void KillAI(StateMachine* machine); // TODO: Implement

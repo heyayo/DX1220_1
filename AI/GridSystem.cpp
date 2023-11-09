@@ -73,6 +73,10 @@ void GridSystem::moveEntityAlongGrid(Entity* ent, const Vector3& loc, float tile
 // Sets Entity Position to Vector
 void GridSystem::teleportEntity(Entity* ent, const Vector3 &newPos)
 {
+	// Bounds Checking
+	if (newPos.x < 0 || newPos.x > _gridWidth*_cellWidth) return;
+	if (newPos.y < 0 || newPos.y > _gridHeight*_cellHeight) return;
+	
     // Teleport Entity
     int oldIndex = GetCellIndexFromEntity(ent); // Get Entity's Old Cell Index
     ent->setPosition(newPos); // Change Position
@@ -85,7 +89,7 @@ void GridSystem::teleportEntity(Entity* ent, const Vector3 &newPos)
     auto oldIter = GetEntityIteratorFromCell(ent, oldIndex); // Entity's Old Position in Vector
     oldCell.erase(oldIter); // Remove
     // Add Entity to New Cell
-    _grid[newIndex].entities.emplace_back(ent);
+    _grid[newIndex].entities.push_back(ent);
 }
 
 Entity* GridSystem::findClosestEntity(Entity* ent, int radius)

@@ -29,13 +29,15 @@ struct PerchState : public State
 
 class BirdAI : public StateMachine
 {
-    MigrationState _migState{this};
-    PerchState _perchState{this};
-
     std::vector<Entity*> _trees;
 
 public:
     BirdAI(Entity* o, const std::vector<Entity*>& trees);
+	
+    MigrationState migrationState{this};
+    PerchState     perchState{this};
+	
+	Entity* getRandomTree(Entity* notThisOne);
 };
 
 #endif
