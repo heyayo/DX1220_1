@@ -16,6 +16,7 @@ public:
 	
 	void Update(double deltaTime);
 	void ChangeState(State* nextState);
+	virtual void RenderTexts();
 	
 	constexpr State* getCurrentState() { return _currentState; }
 	constexpr Entity* getOwner() { return _owner; }

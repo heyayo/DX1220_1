@@ -18,6 +18,8 @@ SceneBase::~SceneBase()
 {
 }
 
+Mtx44 proj;
+
 void SceneBase::Init()
 {
 	// Black background
@@ -119,6 +121,12 @@ void SceneBase::Init()
 	meshList[GEO_TEXT]->material.kAmbient.Set(1, 0, 0);
 
 	bLightEnabled = false;
+	
+	proj.SetToOrtho(
+		0,Application::GetWindowWidth(),
+		0,Application::GetWindowHeight(),
+		-10,10
+	);
 }
 
 void SceneBase::Update(double dt)
@@ -172,9 +180,15 @@ void SceneBase::RenderTextOnScreen(Mesh* mesh, std::string text, Color color, fl
 
 	glDisable(GL_DEPTH_TEST);
 	Mtx44 ortho;
-	ortho.SetToOrtho(0, 80, 0, 60, -10, 10);
+	ortho.SetToOrtho(0,
+					 Application::GetWindowWidth(),
+					 //1000,
+					 0,
+					 //800,
+					 Application::GetWindowHeight(),
+					 -10, 10);
 	projectionStack.PushMatrix();
-	projectionStack.LoadMatrix(ortho);
+	projectionStack.LoadMatrix(proj);
 	viewStack.PushMatrix();
 	viewStack.LoadIdentity();
 	modelStack.PushMatrix();

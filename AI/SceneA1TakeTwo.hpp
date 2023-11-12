@@ -6,6 +6,13 @@
 #include "GridSystem.hpp"
 #include "FSMs/statemachine.hpp"
 
+struct InfoMsgRenderData
+{
+	std::string text;
+	std::pair<float,float> loc;
+	float size = 10.f;
+};
+
 class SceneA1TakeTwo : public SceneBase
 {
     Mtx44 _projectionMatrix;
@@ -16,6 +23,9 @@ class SceneA1TakeTwo : public SceneBase
     Mesh* _normalSquareMesh;
 	unsigned int
 	_birdTex,_treeTex;
+	
+	int staticWidth;
+	int staticHeight;
 
 //    static GridSystem _leftTeamGrid;
 //    static GridSystem _rightTeamGrid;
@@ -25,7 +35,7 @@ class SceneA1TakeTwo : public SceneBase
     unsigned LoadImage(const char* filepath);
     void MoveCamera(const Vector3& offset);
 	
-	std::pair<double,double> MousePos();
+	static std::pair<double,double> MousePos();
 	std::pair<double,double> ScreenToWorldSpace(double x, double y);
 	std::pair<double,double> MousePosWorldSpace();
 
@@ -44,6 +54,7 @@ public:
     virtual void Exit();
 	
 	static GridSystem AllGrid;
+	static std::vector<InfoMsgRenderData> texts;
 };
 
 

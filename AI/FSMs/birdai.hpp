@@ -30,14 +30,18 @@ struct PerchState : public State
 class BirdAI : public StateMachine
 {
     std::vector<Entity*> _trees;
+	float hunger = 100.f;
 
 public:
     BirdAI(Entity* o, const std::vector<Entity*>& trees);
+	
+	void RenderTexts();
 	
     MigrationState migrationState{this};
     PerchState     perchState{this};
 	
 	Entity* getRandomTree(Entity* notThisOne);
+	void TickHunger(double dt, double multiplier = 3.0);
 };
 
 #endif

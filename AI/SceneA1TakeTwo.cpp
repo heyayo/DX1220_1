@@ -3,11 +3,13 @@
 #include "Application.h"
 #include "MeshBuilder.h"
 #include "FSMs/birdai.hpp"
+#include "messager.hpp"
 
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
 
 #include <algorithm>
+#include <sstream>
 
 #define UnpackVector(vec) vec.x,vec.y,vec.z
 #define PrintVector(vec) std::cout << vec.x << ',' << vec.y << ',' << vec.z << std::endl;
@@ -15,10 +17,14 @@
 //GridSystem SceneA1TakeTwo::_leftTeamGrid;
 //GridSystem SceneA1TakeTwo::_rightTeamGrid;
 GridSystem SceneA1TakeTwo::AllGrid;
+std::vector<InfoMsgRenderData> SceneA1TakeTwo::texts;
 
 void SceneA1TakeTwo::Init()
 {
     SceneBase::Init();
+	
+	staticWidth = Application::GetWindowWidth();
+	staticHeight = Application::GetWindowHeight();
 
     // Initializing Projection Matrix
     _projectionMatrix.SetToOrtho(
@@ -55,7 +61,7 @@ void SceneA1TakeTwo::Init()
     _treeTex = LoadImage("Image/tree.jpg");
 
     // Initialize Grid System
-    float cellUniform = Application::GetWindowHeight()/30;
+    float cellUniform = static_cast<float>(Application::GetWindowHeight())/30;
 //    _leftTeamGrid.init(30, 30, cellUniform, cellUniform);
 //    _rightTeamGrid.init(30, 30, cellUniform, cellUniform);
     AllGrid.init(30, 30, cellUniform, cellUniform);
@@ -72,6 +78,8 @@ void SceneA1TakeTwo::Init()
 
     auto trees = AllGrid.getAllWithTag("Tree");
     std::cout << "Fetched Trees | Size: " << trees.size() << std::endl;
+	
+	Messager::GetInstance().Register("scene");
 }
 
 void SceneA1TakeTwo::Update(double deltaTime)
@@ -100,7 +108,7 @@ void SceneA1TakeTwo::Update(double deltaTime)
 		auto pos = MousePosWorldSpace();
 		std::cout << pos.first << ',' << pos.second << std::endl;
 	}
-	if (Application::IsMousePressed(0))
+	if (Application::IsMouseJustPressed(0))
 	{
 //        Entity* result = AllGrid.findClosestEntity(_testEnt1,"Berd",{_testEnt3},radius);
 //        if (result)
@@ -116,14 +124,28 @@ void SceneA1TakeTwo::Update(double deltaTime)
 //									25*deltaTime);
 		auto pos = MousePosWorldSpace();
 		auto ent = AllGrid.spawnEntity(_normalSquareMesh,_birdTex,
-	   {static_cast<float>(pos.first),static_cast<float>(pos.second),2});
+	   {static_cast<float>(pos.first),static_cast<float>(pos.second),3});
+		ent->setScale({20,20,20});
 		std::vector<Entity*> tempTrees(4);
 		tempTrees.assign(_presetTrees,_presetTrees+4);
 		AttachAIToEntity<BirdAI>(ent, tempTrees);
 	}
 	
 	for (auto sm : _sms)
+	{
 		sm->Update(deltaTime);
+		sm->RenderTexts();
+	}
+	
+	Account sceneMessages;
+	// Not Error checking because the scene should always have an account
+	Messager::GetInstance().FetchMessages("scene",sceneMessages);
+	
+	while (!sceneMessages.empty())
+	{
+		sceneMessages.front()->Handle();
+		sceneMessages.pop();
+	}
 }
 
 void SceneA1TakeTwo::Render()
@@ -131,6 +153,11 @@ void SceneA1TakeTwo::Render()
     SceneBase::Render();
     RenderGrid();
 	RenderEntities();
+	for (auto data : texts)
+	{
+		RenderTextOnScreen(meshList[GEO_TEXT],data.text,{0,1,0},data.size,data.loc.first,data.loc.second);
+	}
+	texts.clear();
 }
 
 void SceneA1TakeTwo::RenderGrid()
@@ -273,6 +300,11 @@ std::pair<double, double> SceneA1TakeTwo::MousePos()
 
 std::pair<double, double> SceneA1TakeTwo::ScreenToWorldSpace(double x, double y)
 {
+	// Scale Mouse Position to Current Window Size
+	x = (x/Application::GetWindowWidth())*staticWidth;
+	y = (y/Application::GetWindowHeight())*staticHeight;
+	
+	// Match Camera Position
 	return {x + camera.position.x, y + camera.position.y};
 }
 

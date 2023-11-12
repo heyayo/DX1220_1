@@ -172,3 +172,8 @@ void Application::Exit()
 	//Finalize and clean up GLFW
 	glfwTerminate();
 }
+
+void* Application::GetWindowPtr()
+{
+	return m_window;
+}

@@ -23,6 +23,7 @@ public:
 	static void GetCursorPos(double *xpos, double *ypos);
 	static int GetWindowWidth();
 	static int GetWindowHeight();
+	static void* GetWindowPtr();
 
     static std::mt19937 randomthing;
 

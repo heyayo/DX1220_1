@@ -15,3 +15,8 @@ void StateMachine::ChangeState(State* nextState)
 	_currentState = nextState;
 	_currentState->Enter();
 }
+
+void StateMachine::RenderTexts()
+{
+
+}
