@@ -6,9 +6,13 @@ Messager& Messager::GetInstance()
 	return instance;
 }
 
-void Messager::Register(const std::string& address)
+void Messager::Register(const std::string& address, void* addressOwner)
 {
 	_records.insert({address,{}});
+	if (_repeatRecords.count(address))
+	{
+		_repeatRecords.at(address).push_back(addressOwner);
+	}
 }
 
 int Messager::SendMessage(const std::string& address, std::shared_ptr<msg_base> msg)
@@ -28,4 +32,16 @@ bool Messager::FetchMessages(const std::string& address, Account& record)
 	while (!a.empty())
 		a.pop();
 	return true;
+}
+
+void Messager::HandleMessages()
+{
+	for (auto address : _records)
+	{
+		while (!address.second.empty())
+		{
+			address.second.front()->Handle();
+			address.second.pop();
+		}
+	}
 }

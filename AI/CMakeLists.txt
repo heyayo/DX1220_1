@@ -14,7 +14,7 @@ add_executable(
         GridSystem.hpp
         SceneA1TakeTwo.cpp
         SceneA1TakeTwo.hpp
-        FSMs/statemachine.cpp FSMs/statemachine.hpp FSMs/state.cpp FSMs/state.hpp FSMs/birdai.cpp FSMs/birdai.hpp messager.cpp messager.hpp message.cpp message.hpp)
+        FSMs/statemachine.cpp FSMs/statemachine.hpp FSMs/state.cpp FSMs/state.hpp FSMs/birdai.cpp FSMs/birdai.hpp messager.cpp messager.hpp message.cpp message.hpp FSMs/bunnyai.cpp FSMs/bunnyai.hpp)
 
 target_include_directories(AIEXEC PUBLIC ${CMAKE_SOURCE_DIR}/Common/)
 target_include_directories(AIEXEC PUBLIC ${CMAKE_SOURCE_DIR}/include/)

@@ -27,6 +27,17 @@ struct PerchState : public State
     virtual void Exit() override;
 };
 
+struct HuntingState : public State
+{
+	HuntingState(StateMachine* stateMachine);
+	
+	virtual void Update(double deltaTime) override;
+	virtual void Enter() override;
+	virtual void Exit() override;
+	
+	Entity* prey = nullptr;
+};
+
 class BirdAI : public StateMachine
 {
     std::vector<Entity*> _trees;
@@ -35,12 +46,16 @@ class BirdAI : public StateMachine
 public:
     BirdAI(Entity* o, const std::vector<Entity*>& trees);
 	
+	void Update(double deltaTime);
 	void RenderTexts();
 	
     MigrationState migrationState{this};
     PerchState     perchState{this};
+	HuntingState   huntingState{this};
+	float moveSpeed = 50.f;
 	
 	Entity* getRandomTree(Entity* notThisOne);
+	float getHunger();
 	void TickHunger(double dt, double multiplier = 3.0);
 };
 

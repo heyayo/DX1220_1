@@ -18,14 +18,15 @@ using Account = std::queue<std::shared_ptr<msg_base>>;
 
 class Messager
 {
-	
+	std::map<std::string,std::vector<void*>> _repeatRecords;
 	std::map<std::string,Account> _records;
 
 public:
 	static Messager& GetInstance();
 	
-	void Register(const std::string& address);
+	void Register(const std::string& address, void* addressOwner);
 	int SendMessage(const std::string& address, std::shared_ptr<msg_base> msg);
+	void HandleMessages();
 	bool FetchMessages(const std::string& address, Account& record);
 };
 

@@ -2,8 +2,10 @@
 
 #include "Application.h"
 #include "MeshBuilder.h"
-#include "FSMs/birdai.hpp"
 #include "messager.hpp"
+
+#include "FSMs/birdai.hpp"
+#include "FSMs/bunnyai.hpp"
 
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
@@ -18,6 +20,7 @@
 //GridSystem SceneA1TakeTwo::_rightTeamGrid;
 GridSystem SceneA1TakeTwo::AllGrid;
 std::vector<InfoMsgRenderData> SceneA1TakeTwo::texts;
+std::vector<StateMachine*> SceneA1TakeTwo::sms;
 
 void SceneA1TakeTwo::Init()
 {
@@ -58,6 +61,7 @@ void SceneA1TakeTwo::Init()
             {1,1,1}
     );
 	_birdTex = LoadImage("Image/berd.jpg");
+	_bunnyTex = LoadImage("Image/bunny.jpg");
     _treeTex = LoadImage("Image/tree.jpg");
 
     // Initialize Grid System
@@ -79,7 +83,7 @@ void SceneA1TakeTwo::Init()
     auto trees = AllGrid.getAllWithTag("Tree");
     std::cout << "Fetched Trees | Size: " << trees.size() << std::endl;
 	
-	Messager::GetInstance().Register("scene");
+	Messager::GetInstance().Register("scene", nullptr);
 }
 
 void SceneA1TakeTwo::Update(double deltaTime)
@@ -123,15 +127,16 @@ void SceneA1TakeTwo::Update(double deltaTime)
 //									{static_cast<float>(pos.first),static_cast<float>(pos.second),2},
 //									25*deltaTime);
 		auto pos = MousePosWorldSpace();
-		auto ent = AllGrid.spawnEntity(_normalSquareMesh,_birdTex,
+		auto ent = AllGrid.spawnEntity(_normalSquareMesh,_bunnyTex,
 	   {static_cast<float>(pos.first),static_cast<float>(pos.second),3});
 		ent->setScale({20,20,20});
+		ent->setTag("bunnies");
 		std::vector<Entity*> tempTrees(4);
 		tempTrees.assign(_presetTrees,_presetTrees+4);
-		AttachAIToEntity<BirdAI>(ent, tempTrees);
+		AttachAIToEntity<BunnyAI>(ent);
 	}
 	
-	for (auto sm : _sms)
+	for (auto sm : sms)
 	{
 		sm->Update(deltaTime);
 		sm->RenderTexts();
@@ -262,14 +267,14 @@ template<typename T, typename... ARGS>
 void SceneA1TakeTwo::AttachAIToEntity(Entity* ent, ARGS... a)
 {
     T* machine = new T(ent, a...);
-    _sms.push_back(machine);
+    sms.push_back(machine);
 }
 
 void SceneA1TakeTwo::KillAI(StateMachine* machine)
 {
     // Find StateMachine in Structure
-    auto iter = std::find(_sms.begin(),_sms.end(),machine);
-    _sms.erase(iter);
+    auto iter = std::find(sms.begin(), sms.end(), machine);
+    sms.erase(iter);
 
     // Kill Entity and Free StateMachine Memory
     AllGrid.despawnEntity(machine->getOwner());
@@ -280,11 +285,11 @@ void SceneA1TakeTwo::KillAI(Entity* ent)
 {
     // Search All AIs if they are owned by an Entity
     auto searchTerm = [&](StateMachine* i){ return i->getOwner() == ent; };
-    auto iter = std::find_if(_sms.begin(),_sms.end(),searchTerm);
+    auto iter = std::find_if(sms.begin(), sms.end(), searchTerm);
 
     // Remove StateMachine
     delete (*iter);
-    _sms.erase(iter);
+    sms.erase(iter);
 
     // Kill Entity
     AllGrid.despawnEntity(ent);

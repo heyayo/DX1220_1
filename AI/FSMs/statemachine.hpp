@@ -14,7 +14,7 @@ protected:
 public:
 	StateMachine(Entity* o);
 	
-	void Update(double deltaTime);
+	virtual void Update(double deltaTime);
 	void ChangeState(State* nextState);
 	virtual void RenderTexts();
 	

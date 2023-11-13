@@ -22,14 +22,13 @@ class SceneA1TakeTwo : public SceneBase
     Mesh* _blackSquareMesh;
     Mesh* _normalSquareMesh;
 	unsigned int
-	_birdTex,_treeTex;
+	_birdTex,_bunnyTex,_treeTex;
 	
 	int staticWidth;
 	int staticHeight;
 
 //    static GridSystem _leftTeamGrid;
 //    static GridSystem _rightTeamGrid;
-    std::vector<StateMachine*> _sms;
     Entity* _presetTrees[4];
 
     unsigned LoadImage(const char* filepath);
@@ -53,7 +52,8 @@ public:
     virtual void Render();
     virtual void Exit();
 	
-	static GridSystem AllGrid;
+	static GridSystem                     AllGrid;
+    static std::vector<StateMachine*>     sms;
 	static std::vector<InfoMsgRenderData> texts;
 };
 

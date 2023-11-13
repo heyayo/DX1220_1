@@ -15,7 +15,7 @@ BirdAI::BirdAI(Entity* o, const std::vector<Entity*>& trees) : StateMachine(o), 
     int tree_number = rando(Application::randomthing);
     _currentState = &migrationState;
 	migrationState.tree = trees[tree_number];
-	Messager::GetInstance().Register("birds"); // Same Address for All Birds | Change if needed
+	Messager::GetInstance().Register("birds", nullptr); // Same Address for All Birds | Change if needed
 }
 
 Entity* BirdAI::getRandomTree(Entity* notThisOne)
@@ -44,6 +44,21 @@ void BirdAI::TickHunger(double dt, double multiplier)
 	hunger -= dt * multiplier;
 }
 
+void BirdAI::Update(double deltaTime)
+{
+	StateMachine::Update(deltaTime);
+	if (hunger <= 0)
+	{
+		Messager::GetInstance().SendMessage("scene",std::make_shared<KillAIMessage>(this));
+	}
+	TickHunger(deltaTime); // Constant Hunger Ticking
+}
+
+float BirdAI::getHunger()
+{
+	return hunger;
+}
+
 MigrationState::MigrationState(StateMachine* stateMachine) : State(stateMachine) {}
 
 void MigrationState::Update(double deltaTime)
@@ -52,7 +67,11 @@ void MigrationState::Update(double deltaTime)
 	// SceneA1TakeTwo::AllGrid.moveEntityAlongGrid(state_machine->getOwner(),tree->getPosition(),50*deltaTime);
 	
 	// Messager System Scene Access
-	Messager::GetInstance().SendMessage("scene",std::shared_ptr<msg_base>(new MoveEntityMessage(state_machine->getOwner(),tree,50*deltaTime)));
+	Messager::GetInstance().SendMessage("scene",
+	std::shared_ptr<msg_base>(
+		new MoveEntityMessage(state_machine->getOwner(),
+		  tree,
+		  static_cast<BirdAI*>(state_machine)->moveSpeed*deltaTime)));
 	
 	float diff = (tree->getPosition() - state_machine->getOwner()->getPosition()).LengthSquared();
 	if ( 2 * 2 > diff )
@@ -60,7 +79,6 @@ void MigrationState::Update(double deltaTime)
 		tree = static_cast<BirdAI*>(state_machine)->getRandomTree(tree);
 		state_machine->ChangeState(&static_cast<BirdAI*>(state_machine)->perchState);
 	}
-	static_cast<BirdAI*>(state_machine)->TickHunger(deltaTime);
 }
 
 void MigrationState::Enter()
@@ -79,8 +97,13 @@ PerchState::PerchState(StateMachine* stateMachine) : State(stateMachine) {}
 void PerchState::Update(double deltaTime)
 {
 	static double timer = 0.f;
-	static_cast<BirdAI*>(state_machine)->TickHunger(deltaTime);
 	timer += deltaTime;
+	if (static_cast<BirdAI*>(state_machine)->getHunger() < 60)
+	{
+		state_machine->ChangeState(&static_cast<BirdAI*>(state_machine)->huntingState);
+		timer = 0.f;
+		return;
+	}
 	if (timer > 3)
 	{
 		// Bird Ends Perch
@@ -97,4 +120,40 @@ void PerchState::Enter()
 void PerchState::Exit()
 {
     LOGINFO("Bird Left Tree | " << state_machine->getOwner());
+}
+
+HuntingState::HuntingState(StateMachine* stateMachine) : State(stateMachine)
+{
+
+}
+
+void HuntingState::Update(double deltaTime)
+{
+	static double timer = 0.f;
+	
+	timer += deltaTime;
+	
+	if (timer > 1) // If Bird is unable to find a prey
+	{
+		state_machine->ChangeState(&static_cast<BirdAI*>(state_machine)->migrationState);
+		timer = 0.f;
+	}
+	
+	if (prey)
+	{
+		Messager::GetInstance().SendMessage("scene",
+											std::make_shared<MoveEntityMessage>(state_machine->getOwner(),prey,
+												static_cast<BirdAI*>(state_machine)->moveSpeed*deltaTime));
+	}
+}
+
+void HuntingState::Enter()
+{
+	LOGINFO("Bird Hunting for Food | " << state_machine->getOwner());
+	Messager::GetInstance().SendMessage("scene",std::make_shared<BirdRequestPreyMessage>(state_machine->getOwner()));
+}
+
+void HuntingState::Exit()
+{
+	LOGINFO("Bird Ended Hunt | " << state_machine->getOwner());
 }
