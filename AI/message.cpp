@@ -4,6 +4,8 @@
 #include "FSMs/birdai.hpp"
 #include "messager.hpp"
 
+#include <algorithm>
+
 void MoveEntityMessage::Handle()
 {
 	// Cast Sender to Entity | Non-Entities should not send this message
@@ -74,6 +76,7 @@ BirdPreyRequestReplyMessage::BirdPreyRequestReplyMessage(void* p, void* owner)
 void BunnyCheckForPopulationCountMessage::Handle()
 {
 	auto vec = SceneA1TakeTwo::AllGrid.getAllWithTag("bunnies");
+    *popSize = vec.size();
 	if (vec.size() > 2)
 	{
 		// Fetch AI Vector
@@ -105,4 +108,14 @@ MoveEntityUsingVectorMessage::MoveEntityUsingVectorMessage(void* e, float s, flo
 	speed = s;
 	x = nx;
 	y = ny;
+}
+
+void BunnyFindMateMessage::Handle()
+{
+    (*mate) = SceneA1TakeTwo::AllGrid.findClosestEntity(static_cast<Entity*>(ent),"bunnies",30);
+}
+
+BunnyFindMateMessage::BunnyFindMateMessage(void* entity)
+{
+    ent = entity;
 }

@@ -10,7 +10,7 @@
 
 enum SEND_FAILURE_CODES
 {
-	INVALID_ADDRESS = -1,
+	BAD_SEND = -1,
 	SEND_SUCCESS = 200 // HTTP Success Code | why not
 };
 
@@ -18,7 +18,6 @@ using Account = std::queue<std::shared_ptr<msg_base>>;
 
 class Messager
 {
-	std::map<std::string,std::vector<void*>> _repeatRecords;
 	std::map<std::string,Account> _records;
 
 public:
@@ -26,9 +25,9 @@ public:
 	
 	void Register(const std::string& address, void* addressOwner);
 	int SendMessage(const std::string& address, std::shared_ptr<msg_base> msg);
+    int SendMessageInstant(const std::string& address, std::shared_ptr<msg_base> msg);
 	void HandleMessages();
 	bool FetchMessages(const std::string& address, Account& record);
 };
-
 
 #endif

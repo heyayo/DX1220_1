@@ -27,15 +27,27 @@ struct BunnyWander : public State
 	BunnyWander(StateMachine* stateMachine);
 };
 
+struct BunnyBreed : public State
+{
+    Entity* mate; // Closest Bunny
+
+    virtual void Update(double deltaTime) override;
+    virtual void Enter() override;
+    virtual void Exit() override;
+
+    BunnyBreed(StateMachine* stateMachine);
+};
+
 class BunnyAI : public StateMachine
 {
-
 public:
 	BunnyAI(Entity* o);
-	
+
+    int popSizeTracker = 0;
+
 	SelfPopulationControlByImplodingState selfImplode{this};
 	BunnyWander wander{this};
-	
+	BunnyBreed breeding{this};
 };
 
 

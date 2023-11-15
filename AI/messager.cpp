@@ -9,18 +9,21 @@ Messager& Messager::GetInstance()
 void Messager::Register(const std::string& address, void* addressOwner)
 {
 	_records.insert({address,{}});
-	if (_repeatRecords.count(address))
-	{
-		_repeatRecords.at(address).push_back(addressOwner);
-	}
 }
 
 int Messager::SendMessage(const std::string& address, std::shared_ptr<msg_base> msg)
 {
-	if (!_records.count(address)) return INVALID_ADDRESS; // Invalid Address
+	if (!_records.count(address)) return BAD_SEND; // Invalid Address
 	
 	_records.at(address).push(msg);
 	return SEND_SUCCESS;
+}
+
+int Messager::SendMessageInstant(const std::string &address, std::shared_ptr<msg_base> msg)
+{
+    if (!msg) return BAD_SEND;
+    msg->Handle();
+    return SEND_SUCCESS;
 }
 
 bool Messager::FetchMessages(const std::string& address, Account& record)

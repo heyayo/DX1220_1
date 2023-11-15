@@ -63,6 +63,7 @@ struct BunnyCheckForPopulationCountMessage : public msg_base
 {
 	void* owner;
 	void* statemachine;
+    int* popSize = nullptr;
 	
 	void Handle() override;
 	
@@ -79,6 +80,16 @@ struct MoveEntityUsingVectorMessage : public msg_base
 	void Handle() override;
 	
 	MoveEntityUsingVectorMessage(void* e, float s, float nx, float ny);
+};
+
+struct BunnyFindMateMessage : public msg_base
+{
+    void* ent;
+    void** mate;
+
+    void Handle() override;
+
+    BunnyFindMateMessage(void* entity);
 };
 
 #endif

@@ -9,7 +9,7 @@
 BunnyAI::BunnyAI(Entity* o) : StateMachine(o)
 {
 	_currentState = &wander;
-	Messager::GetInstance().Register("bunnies",nullptr);
+	Messager::GetInstance().Register("bunnies",this);
 	
 	std::uniform_real_distribution<float> rando(-50,50);
 	wander.x = rando(Application::randomthing);
@@ -22,6 +22,11 @@ BunnyAI::BunnyAI(Entity* o) : StateMachine(o)
 void SelfPopulationControlByImplodingState::Update(double deltaTime)
 {
 	timer += deltaTime;
+    if (static_cast<BunnyAI*>(state_machine)->popSizeTracker < 20)
+    {
+        state_machine->ChangeState(&static_cast<BunnyAI*>(state_machine)->breeding);
+        return;
+    }
 	if (timer > 5)
 	{
 		state_machine->ChangeState(
@@ -76,3 +81,22 @@ void BunnyWander::Exit()
 }
 
 BunnyWander::BunnyWander(StateMachine* stateMachine) : State(stateMachine) {}
+
+void BunnyBreed::Update(double deltaTime)
+{
+    Messager::GetInstance().SendMessageInstant("scene",std::make_shared<MoveEntityMessage>(state_machine->getOwner(),mate,60*deltaTime));
+}
+
+void BunnyBreed::Enter()
+{
+    LOGINFO("Bunny Searching for a Mate | " << state_machine->getOwner());
+    // Message will Find Bunny Mate
+    Messager::GetInstance().SendMessageInstant("scene",std::make_shared<BunnyFindMateMessage>(static_cast<Entity*>(state_machine->getOwner())));
+}
+
+void BunnyBreed::Exit()
+{
+    LOGINFO("Bunny Mating Season Ended | " << state_machine->getOwner());
+}
+
+BunnyBreed::BunnyBreed(StateMachine* stateMachine) : State(stateMachine) {}
