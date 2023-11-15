@@ -43,8 +43,8 @@ class SceneA1TakeTwo : public SceneBase
 
     template<typename T, typename... ARGS>
     void AttachAIToEntity(Entity* ent, ARGS... a);
-	void KillAI(StateMachine* machine); // TODO: Implement
-    void KillAI(Entity* ent);
+	static void KillAI(StateMachine* machine);
+    static void KillAI(Entity* ent);
 
 public:
     virtual void Init();

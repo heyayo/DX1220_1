@@ -3,6 +3,7 @@
 #include "Application.h"
 #include "MeshBuilder.h"
 #include "messager.hpp"
+#include "bulletboard.hpp"
 
 #include "FSMs/birdai.hpp"
 #include "FSMs/bunnyai.hpp"
@@ -84,6 +85,12 @@ void SceneA1TakeTwo::Init()
     std::cout << "Fetched Trees | Size: " << trees.size() << std::endl;
 	
 	Messager::GetInstance().Register("scene", nullptr);
+	
+	BulletBoard::GetInstance().Entity_Death_Queue.Handler = [](std::vector<StateMachine*>& death_list)
+		{
+		for (auto sm : death_list)
+			SceneA1TakeTwo::KillAI(sm);
+		};
 }
 
 void SceneA1TakeTwo::Update(double deltaTime)

@@ -36,7 +36,8 @@ void BirdAI::RenderTexts()
 	ss.precision(5);
 	ss << "Hunger: " << hunger;
 	auto pos = getOwner()->getPosition();
-	Messager::GetInstance().SendMessage("scene",std::make_shared<RenderInfoTextMessage>(ss.str().c_str(),pos.x,pos.y,30));
+	SceneA1TakeTwo::texts.push_back({ss.str(),{pos.x,pos.y},30});
+//	Messager::GetInstance().SendMessage("scene",std::make_shared<RenderInfoTextMessage>(ss.str().c_str(),pos.x,pos.y,30));
 }
 
 void BirdAI::TickHunger(double dt, double multiplier)
@@ -64,14 +65,15 @@ MigrationState::MigrationState(StateMachine* stateMachine) : State(stateMachine)
 void MigrationState::Update(double deltaTime)
 {
 	// Direct Scene Access
-	// SceneA1TakeTwo::AllGrid.moveEntityAlongGrid(state_machine->getOwner(),tree->getPosition(),50*deltaTime);
+	// TODO MOVEMENT SPEED BALANCING
+	SceneA1TakeTwo::AllGrid.moveEntityAlongGrid(state_machine->getOwner(),tree->getPosition(),50*deltaTime);
 	
 	// Messager System Scene Access
-	Messager::GetInstance().SendMessage("scene",
-	std::shared_ptr<msg_base>(
-		new MoveEntityMessage(state_machine->getOwner(),
-		  tree,
-		  static_cast<BirdAI*>(state_machine)->moveSpeed*deltaTime)));
+//	Messager::GetInstance().SendMessage("scene",
+//	std::shared_ptr<msg_base>(
+//		new MoveEntityMessage(state_machine->getOwner(),
+//		  tree,
+//		  static_cast<BirdAI*>(state_machine)->moveSpeed*deltaTime)));
 	
 	float diff = (tree->getPosition() - state_machine->getOwner()->getPosition()).LengthSquared();
 	if ( 2 * 2 > diff )
@@ -139,18 +141,21 @@ void HuntingState::Update(double deltaTime)
 		timer = 0.f;
 	}
 	
+	// TODO Using BulletBoard System (Write), Track Unique Prey
 	if (prey)
 	{
-		Messager::GetInstance().SendMessage("scene",
-											std::make_shared<MoveEntityMessage>(state_machine->getOwner(),prey,
-												static_cast<BirdAI*>(state_machine)->moveSpeed*deltaTime));
+		SceneA1TakeTwo::AllGrid.moveEntityAlongGrid(state_machine->getOwner(),prey->getPosition(),static_cast<BirdAI*>(state_machine)->moveSpeed*deltaTime);
+//		Messager::GetInstance().SendMessage("scene",
+//											std::make_shared<MoveEntityMessage>(state_machine->getOwner(),prey,
+//												static_cast<BirdAI*>(state_machine)->moveSpeed*deltaTime));
 	}
 }
 
 void HuntingState::Enter()
 {
 	LOGINFO("Bird Hunting for Food | " << state_machine->getOwner());
-	Messager::GetInstance().SendMessage("scene",std::make_shared<BirdRequestPreyMessage>(state_machine->getOwner()));
+	prey = SceneA1TakeTwo::AllGrid.findClosestEntity(state_machine->getOwner(),"bunnies",30); // Add Exceptions for Tracked Bunnies
+//	Messager::GetInstance().SendMessage("scene",std::make_shared<BirdRequestPreyMessage>(state_machine->getOwner()));
 }
 
 void HuntingState::Exit()
