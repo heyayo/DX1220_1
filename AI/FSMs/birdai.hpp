@@ -52,10 +52,11 @@ public:
     MigrationState migrationState{this};
     PerchState     perchState{this};
 	HuntingState   huntingState{this};
-	float moveSpeed = 50.f;
 	
+	float getMoveSpeed();
 	Entity* getRandomTree(Entity* notThisOne);
 	float getHunger();
+	void addHunger(float value);
 	void TickHunger(double dt, double multiplier = 3.0);
 };
 

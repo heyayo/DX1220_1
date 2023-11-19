@@ -42,6 +42,15 @@ Entity* GridSystem::spawnEntity(Mesh* mesh, unsigned tex, const Vector3& loc)
     return ent;
 }
 
+void GridSystem::insertEntity(Entity* ent)
+{
+	_grid[0].entities.push_back(ent);
+	_allEntities.push_back(ent);
+	auto pos = ent->getPosition();
+	ent->setPosition({0,0,pos.z});
+	teleportEntity(ent,pos);
+}
+
 void GridSystem::despawnEntity(Entity* ent)
 {
     int index = GetCellIndexFromEntity(ent);

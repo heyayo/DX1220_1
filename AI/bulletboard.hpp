@@ -3,29 +3,30 @@
 
 #include "FSMs/statemachine.hpp"
 
-#include <map>
-#include <string>
-#include <vector>
-#include <memory>
+#include <string> // string
+#include <vector> // vector
+#include <set>
+#include <memory> // shared_ptr
+#include <algorithm> // find
 
+template<typename T,
+    template<typename>
+	typename Container>
 struct BoardAccount
 {
-	std::vector<Entity*> posts;
-	void(*Handler)(std::vector<StateMachine*>&); // Function To Handle Posts
+	Container<T> posts;
+	void(*Handler)(Container<T>&); // Function To Handle Posts | not used
 };
 
 class BulletBoard
 {
-	std::map<std::string,BoardAccount> _accounts;
-	
 public:
 	static BulletBoard& GetInstance();
 	
-	BoardAccount Entity_Death_Queue; // Places AIs on deathrow to prevent state access when state machine has already been deleted
-	BoardAccount Bird_Prey_Reservation; // List of Bunnies already tracked by a bird | Prevents corpse theft and necrophilia
-	BoardAccount Bunny_Mate_Reservation; // List of Bunnies already with a mate | Prevents polygamy
-	
-	void registerAccount(const std::string& account_name, void(*handler_function)(std::vector<StateMachine*>&));
+	BoardAccount<StateMachine*,std::vector> AI_Death_Queue; // Places AIs on deathrow to prevent state access when state machine has already been deleted
+	BoardAccount<std::pair<StateMachine*,Entity*>,std::vector> AI_Birth_Queue; // Queues AIs to be born to prevent growing or shrinking std::vectors during loop (iterator invalidation)
+	BoardAccount<Entity*,std::set> Bird_Prey_Reservation; // List of Bunnies already tracked by a bird | Prevents corpse theft and necrophilia
+	BoardAccount<std::pair<Entity*,Entity*>,std::set> Bunny_Mate_Reservation; // List of Bunnies already with a mate | Prevents polygamy
 };
 
 #endif

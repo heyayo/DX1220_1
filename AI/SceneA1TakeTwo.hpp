@@ -4,7 +4,10 @@
 #include "SceneBase.h"
 
 #include "GridSystem.hpp"
+#include "bulletboard.hpp"
 #include "FSMs/statemachine.hpp"
+#include "FSMs/bunnyai.hpp"
+#include "FSMs/birdai.hpp"
 
 struct InfoMsgRenderData
 {
@@ -19,10 +22,10 @@ class SceneA1TakeTwo : public SceneBase
     Mtx44 _viewMatrix;
 
     Mesh* _whiteSquareMesh;
-    Mesh* _blackSquareMesh;
-    Mesh* _normalSquareMesh;
-	unsigned int
-	_birdTex,_bunnyTex,_treeTex;
+	Mesh* _blackSquareMesh;
+	static Mesh* _normalSquareMesh;
+	static unsigned int
+	_birdTex,_bunnyTex,_beehiveTex,_beeTex,_treeTex;
 	
 	int staticWidth;
 	int staticHeight;
@@ -41,12 +44,33 @@ class SceneA1TakeTwo : public SceneBase
     void RenderGrid();
 	void RenderEntities();
 
+public:
     template<typename T, typename... ARGS>
-    void AttachAIToEntity(Entity* ent, ARGS... a);
+    static void AttachAIToEntity(Entity* ent, ARGS... a)
+	{
+		T* machine = new T(ent, a...);
+		sms.push_back(machine);
+	}
+	template<typename T, typename... ARGS>
+	static Entity* SpawnAI(ARGS... a)
+	{
+		// Constexpr Ifs to determine Texture at compile time
+		unsigned int texture = _treeTex;
+		if constexpr (std::is_same_v<T,BunnyAI>)
+			texture = _bunnyTex;
+		if constexpr (std::is_same_v<T,BirdAI>)
+			texture = _birdTex;
+		
+		auto ent = new Entity(_normalSquareMesh,texture);
+		BulletBoard::GetInstance().AI_Birth_Queue.posts.push_back({new T(ent, a...),ent});
+		return ent;
+	}
 	static void KillAI(StateMachine* machine);
     static void KillAI(Entity* ent);
+	static StateMachine* GetSMFromEntity(Entity* ent);
+	
+	static std::pair<double,double> GetRandomLocationOnMap();
 
-public:
     virtual void Init();
     virtual void Update(double deltaTime);
     virtual void Render();

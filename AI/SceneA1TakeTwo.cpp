@@ -3,7 +3,7 @@
 #include "Application.h"
 #include "MeshBuilder.h"
 #include "messager.hpp"
-#include "bulletboard.hpp"
+#include "logging.hpp"
 
 #include "FSMs/birdai.hpp"
 #include "FSMs/bunnyai.hpp"
@@ -22,6 +22,14 @@
 GridSystem SceneA1TakeTwo::AllGrid;
 std::vector<InfoMsgRenderData> SceneA1TakeTwo::texts;
 std::vector<StateMachine*> SceneA1TakeTwo::sms;
+Mesh* SceneA1TakeTwo::_normalSquareMesh;
+
+unsigned int
+SceneA1TakeTwo::_treeTex,
+SceneA1TakeTwo::_bunnyTex,
+SceneA1TakeTwo::_birdTex,
+SceneA1TakeTwo::_beeTex,
+SceneA1TakeTwo::_beehiveTex;
 
 void SceneA1TakeTwo::Init()
 {
@@ -63,6 +71,8 @@ void SceneA1TakeTwo::Init()
     );
 	_birdTex = LoadImage("Image/berd.jpg");
 	_bunnyTex = LoadImage("Image/bunny.jpg");
+	_beehiveTex = LoadImage("Image/beehive.jpeg");
+	_beeTex = LoadImage("Image/bee.jpg");
     _treeTex = LoadImage("Image/tree.jpg");
 
     // Initialize Grid System
@@ -86,7 +96,7 @@ void SceneA1TakeTwo::Init()
 	
 	Messager::GetInstance().Register("scene", nullptr);
 	
-	BulletBoard::GetInstance().Entity_Death_Queue.Handler = [](std::vector<StateMachine*>& death_list)
+	BulletBoard::GetInstance().AI_Death_Queue.Handler = [](std::vector<StateMachine*>& death_list)
 		{
 		for (auto sm : death_list)
 			SceneA1TakeTwo::KillAI(sm);
@@ -117,7 +127,19 @@ void SceneA1TakeTwo::Update(double deltaTime)
 //		else std::cout << "No Find" << std::endl;
 //		std::cout << "Radius: " << radius << std::endl;
 		auto pos = MousePosWorldSpace();
-		std::cout << pos.first << ',' << pos.second << std::endl;
+		bool xbounds = pos.first > 0 && pos.first < 600;
+		bool ybounds = pos.second > 0 && pos.second < 600;
+		if (xbounds && ybounds)
+		{
+			auto ent = AllGrid.spawnEntity(_normalSquareMesh,_birdTex,
+										   {static_cast<float>(pos.first),static_cast<float>(pos.second),3});
+			ent->setScale({50,50,50});
+			ent->setTag("birds");
+			std::vector<Entity*> tempTrees(4);
+			tempTrees.assign(_presetTrees, _presetTrees+4);
+			AttachAIToEntity<BirdAI>(ent,tempTrees);
+			LOGINFO("Spawned Bird | " << ent->getTag());
+		}
 	}
 	if (Application::IsMouseJustPressed(0))
 	{
@@ -134,13 +156,19 @@ void SceneA1TakeTwo::Update(double deltaTime)
 //									{static_cast<float>(pos.first),static_cast<float>(pos.second),2},
 //									25*deltaTime);
 		auto pos = MousePosWorldSpace();
-		auto ent = AllGrid.spawnEntity(_normalSquareMesh,_bunnyTex,
-	   {static_cast<float>(pos.first),static_cast<float>(pos.second),3});
-		ent->setScale({20,20,20});
-		ent->setTag("bunnies");
-		std::vector<Entity*> tempTrees(4);
-		tempTrees.assign(_presetTrees,_presetTrees+4);
-		AttachAIToEntity<BunnyAI>(ent);
+		bool xbounds = pos.first > 0 && pos.first < 600;
+		bool ybounds = pos.second > 0 && pos.second < 600;
+		if (xbounds && ybounds)
+		{
+			auto ent = AllGrid.spawnEntity(_normalSquareMesh,_bunnyTex,
+		   {static_cast<float>(pos.first),static_cast<float>(pos.second),3});
+			ent->setScale({30,30,30});
+			ent->setTag("bunnies");
+			std::vector<Entity*> tempTrees(4);
+			tempTrees.assign(_presetTrees,_presetTrees+4);
+			AttachAIToEntity<BunnyAI>(ent);
+			LOGINFO(pos.first << " | " << pos.second);
+		}
 	}
 	
 	for (auto sm : sms)
@@ -157,6 +185,34 @@ void SceneA1TakeTwo::Update(double deltaTime)
 	{
 		sceneMessages.front()->Handle();
 		sceneMessages.pop();
+	}
+	
+	try
+	{
+		auto& death_queue = BulletBoard::GetInstance().AI_Death_Queue;
+		for (auto ai : death_queue.posts)
+		{
+			KillAI(ai);
+		}
+		death_queue.posts.clear();
+	} catch (const std::exception& e)
+	{
+		LOGERROR("Death Queue Problem");
+		throw e;
+	}
+	try
+	{
+		auto& birth_queue = BulletBoard::GetInstance().AI_Birth_Queue;
+		for (auto ai : birth_queue.posts)
+		{
+			sms.push_back(ai.first);
+			AllGrid.insertEntity(ai.second);
+		}
+		birth_queue.posts.clear();
+	} catch (const std::exception& e)
+	{
+		LOGERROR("Birth Queue Problem");
+		throw e;
 	}
 }
 
@@ -270,13 +326,6 @@ unsigned SceneA1TakeTwo::LoadImage(const char* filepath)
     return textureID;
 }
 
-template<typename T, typename... ARGS>
-void SceneA1TakeTwo::AttachAIToEntity(Entity* ent, ARGS... a)
-{
-    T* machine = new T(ent, a...);
-    sms.push_back(machine);
-}
-
 void SceneA1TakeTwo::KillAI(StateMachine* machine)
 {
     // Find StateMachine in Structure
@@ -324,4 +373,17 @@ std::pair<double, double> SceneA1TakeTwo::MousePosWorldSpace()
 {
 	auto temp = MousePos();
 	return ScreenToWorldSpace(temp.first,temp.second);
+}
+
+std::pair<double, double> SceneA1TakeTwo::GetRandomLocationOnMap()
+{
+	std::uniform_real_distribution<double> rando(0,600);
+	return {rando(Application::randomthing),rando(Application::randomthing)};
+}
+
+StateMachine* SceneA1TakeTwo::GetSMFromEntity(Entity* ent)
+{
+	for (auto sm : sms)
+		if (sm->getOwner() == ent) return sm;
+	return nullptr;
 }

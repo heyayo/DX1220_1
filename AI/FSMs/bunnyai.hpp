@@ -4,6 +4,9 @@
 #include "statemachine.hpp"
 #include "state.hpp"
 
+#define BUNNY_MATE_PROXIMITY 10
+#define BUNNY_MATING_FREQUENCY 5
+
 struct SelfPopulationControlByImplodingState : public State
 {
 	double timer = 0.f;
@@ -17,7 +20,6 @@ struct SelfPopulationControlByImplodingState : public State
 
 struct BunnyWander : public State
 {
-	float x,y;
 	float xTarget, yTarget;
 	
 	void Update(double deltaTime) override;
@@ -29,7 +31,7 @@ struct BunnyWander : public State
 
 struct BunnyBreed : public State
 {
-    Entity* mate; // Closest Bunny
+    Entity* mate = nullptr; // Closest Bunny
 
     virtual void Update(double deltaTime) override;
     virtual void Enter() override;
@@ -38,16 +40,30 @@ struct BunnyBreed : public State
     BunnyBreed(StateMachine* stateMachine);
 };
 
+struct BunnyAwaitMate : public State
+{
+	Entity* mate = nullptr;
+	
+	void Update(double deltaTime) override;
+	void Enter() override;
+	void Exit() override;
+	
+	BunnyAwaitMate(StateMachine* stateMachine);
+};
+
 class BunnyAI : public StateMachine
 {
 public:
 	BunnyAI(Entity* o);
-
-    int popSizeTracker = 0;
+	
+	float mating_timer = 0.f;
 
 	SelfPopulationControlByImplodingState selfImplode{this};
 	BunnyWander wander{this};
 	BunnyBreed breeding{this};
+	BunnyAwaitMate awaitMate{this};
+	
+	void Update(double deltaTime) override;
 };
 
 
