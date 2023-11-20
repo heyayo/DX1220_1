@@ -8,6 +8,8 @@
 
 // TODO TEST BEE AI
 
+HiveData BeeAI::hiveData;
+
 BeeAI::BeeAI(Entity* o, const std::vector<Entity*>& trees, Entity* beehive) : StateMachine(o)
 {
 	treeList = trees;

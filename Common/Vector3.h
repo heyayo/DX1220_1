@@ -59,11 +59,11 @@ struct Vector3
 	
 	//Return a copy of this vector, normalized
 	//Throw a divide by zero exception if normalizing a zero vector
-	Vector3 Normalized( void ) const throw( DivideByZero );
+	Vector3 Normalized( void ) const noexcept(false); // IDE suggested noexcept(false) to fix C++17 Rule preventing dynamic exception specifications
 	
 	//Normalize this vector and return a reference to it
 	//Throw a divide by zero exception if normalizing a zero vector
-	Vector3& Normalize( void ) throw( DivideByZero );
+	Vector3& Normalize( void ) noexcept(false); // IDE suggested noexcept(false) to fix C++17 Rule preventing dynamic exception specifications
 	
 	friend std::ostream& operator<<( std::ostream& os, Vector3& rhs); //print to ostream
 

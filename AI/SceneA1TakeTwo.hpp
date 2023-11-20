@@ -16,8 +16,18 @@ struct InfoMsgRenderData
 	float size = 10.f;
 };
 
+#define SPAWNER_FUCTION_COUNT 3
+
 class SceneA1TakeTwo : public SceneBase
 {
+    typedef void(SceneA1TakeTwo::*SpawnFunction)();
+    SpawnFunction spawners[SPAWNER_FUCTION_COUNT];
+    std::string spawnerNames[SPAWNER_FUCTION_COUNT];
+    int spawnerIndex = 0;
+    void BirdSpawner();
+    void BunnySpawner();
+    void BeeSpawner();
+
     Mtx44 _projectionMatrix;
     Mtx44 _viewMatrix;
 
@@ -33,6 +43,7 @@ class SceneA1TakeTwo : public SceneBase
 //    static GridSystem _leftTeamGrid;
 //    static GridSystem _rightTeamGrid;
     Entity* _presetTrees[4];
+    Entity* _beeHive = nullptr;
 
     unsigned LoadImage(const char* filepath);
     void MoveCamera(const Vector3& offset);
@@ -43,6 +54,7 @@ class SceneA1TakeTwo : public SceneBase
 
     void RenderGrid();
 	void RenderEntities();
+    void RenderInfoTexts();
 
 public:
     template<typename T, typename... ARGS>

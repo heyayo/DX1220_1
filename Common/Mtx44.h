@@ -31,13 +31,13 @@ public:
 	void Transpose(void);
 	void SetToZero(void);
 	Mtx44 GetTranspose() const;
-	Mtx44 GetInverse() const throw( DivideByZero );
+	Mtx44 GetInverse() const noexcept(false); // IDE suggested noexcept(false) to fix C++17 Rule preventing dynamic exception specifications
 	Mtx44 operator*(const Mtx44& rhs) const;
 	Mtx44 operator+(const Mtx44& rhs) const;
 	Mtx44& operator=(const Mtx44& rhs);
 	Mtx44 operator*(float scalar) const;
 	Vector3 operator*(const Vector3& rhs) const;
-	void SetToRotation(float degrees, float axisX, float axisY, float axisZ) throw( DivideByZero );
+	void SetToRotation(float degrees, float axisX, float axisY, float axisZ) noexcept(false); // IDE suggested noexcept(false) to fix C++17 Rule preventing dynamic exception specifications
 	void SetToScale(float sx, float sy, float sz);
 	void SetToTranslation(float tx, float ty, float tz);
 	void SetToFrustum(double left, double right, double	bottom, double top, double near, double far);

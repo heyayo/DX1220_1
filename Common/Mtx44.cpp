@@ -136,7 +136,7 @@ Return a new matrix that is an inverse
 \return A new matrix
 */
 /******************************************************************************/
-Mtx44 Mtx44::GetInverse() const throw( DivideByZero ) {
+Mtx44 Mtx44::GetInverse() const {
 	float a0 = a[ 0]*a[ 5] - a[ 1]*a[ 4];
     float a1 = a[ 0]*a[ 6] - a[ 2]*a[ 4];
     float a2 = a[ 0]*a[ 7] - a[ 3]*a[ 4];
@@ -316,7 +316,7 @@ Set Matrix to a rotation matrix about arbitrary axis
 	Thrown if rotation axis is a zero vector
 */
 /******************************************************************************/
-void Mtx44::SetToRotation(float degrees, float axisX, float axisY, float axisZ) throw( DivideByZero ) {
+void Mtx44::SetToRotation(float degrees, float axisX, float axisY, float axisZ) {
 	double mag = sqrt(axisX * axisX + axisY * axisY + axisZ * axisZ);
 	if(Math::FAbs((float)mag) < Math::EPSILON)
 		throw DivideByZero();

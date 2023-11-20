@@ -7,6 +7,7 @@
 
 #include "FSMs/birdai.hpp"
 #include "FSMs/bunnyai.hpp"
+#include "FSMs/beeai.hpp"
 
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
@@ -90,10 +91,16 @@ void SceneA1TakeTwo::Init()
 		presetTree->setRotation({0, 0, 180});
 		presetTree->setTag("Tree");
 	}
+    _beeHive = AllGrid.spawnEntity(_normalSquareMesh,_beehiveTex,{300,300,2});
+    _beeHive->setTag("beehive");
 
-    auto trees = AllGrid.getAllWithTag("Tree");
-    std::cout << "Fetched Trees | Size: " << trees.size() << std::endl;
-	
+    spawners[0] = &SceneA1TakeTwo::BirdSpawner;
+    spawners[1] = &SceneA1TakeTwo::BunnySpawner;
+    spawners[2] = &SceneA1TakeTwo::BeeSpawner;
+    spawnerNames[0] = "Birds";
+    spawnerNames[1] = "Bunnies";
+    spawnerNames[2] = "Bees";
+
 	Messager::GetInstance().Register("scene", nullptr);
 	
 	BulletBoard::GetInstance().AI_Death_Queue.Handler = [](std::vector<StateMachine*>& death_list)
@@ -118,57 +125,11 @@ void SceneA1TakeTwo::Update(double deltaTime)
 
 	if (Application::IsMouseJustPressed(1))
 	{
-//		Entity* result = AllGrid.findClosestEntity(_testEnt1,"Berd",{_testEnt2,_testEnt3},radius);
-//		if (result)
-//		{
-//			std::cout << result->getMesh()->name << std::endl;
-//			PrintVector(result->getPosition());
-//		}
-//		else std::cout << "No Find" << std::endl;
-//		std::cout << "Radius: " << radius << std::endl;
-		auto pos = MousePosWorldSpace();
-		bool xbounds = pos.first > 0 && pos.first < 600;
-		bool ybounds = pos.second > 0 && pos.second < 600;
-		if (xbounds && ybounds)
-		{
-			auto ent = AllGrid.spawnEntity(_normalSquareMesh,_birdTex,
-										   {static_cast<float>(pos.first),static_cast<float>(pos.second),3});
-			ent->setScale({50,50,50});
-			ent->setTag("birds");
-			std::vector<Entity*> tempTrees(4);
-			tempTrees.assign(_presetTrees, _presetTrees+4);
-			AttachAIToEntity<BirdAI>(ent,tempTrees);
-			LOGINFO("Spawned Bird | " << ent->getTag());
-		}
+        spawnerIndex = (spawnerIndex+1)%SPAWNER_FUCTION_COUNT;
 	}
 	if (Application::IsMouseJustPressed(0))
 	{
-//        Entity* result = AllGrid.findClosestEntity(_testEnt1,"Berd",{_testEnt3},radius);
-//        if (result)
-//        {
-//            std::cout << result->getMesh()->name << std::endl;
-//            PrintVector(result->getPosition());
-//        }
-//        else std::cout << "No Find" << std::endl;
-//        std::cout << "Radius: " << radius << std::endl;
-//		auto pos = MousePosWorldSpace();
-//		AllGrid.moveEntityAlongGrid(_testEnt1,
-//									{static_cast<float>(pos.first),static_cast<float>(pos.second),2},
-//									25*deltaTime);
-		auto pos = MousePosWorldSpace();
-		bool xbounds = pos.first > 0 && pos.first < 600;
-		bool ybounds = pos.second > 0 && pos.second < 600;
-		if (xbounds && ybounds)
-		{
-			auto ent = AllGrid.spawnEntity(_normalSquareMesh,_bunnyTex,
-		   {static_cast<float>(pos.first),static_cast<float>(pos.second),3});
-			ent->setScale({30,30,30});
-			ent->setTag("bunnies");
-			std::vector<Entity*> tempTrees(4);
-			tempTrees.assign(_presetTrees,_presetTrees+4);
-			AttachAIToEntity<BunnyAI>(ent);
-			LOGINFO(pos.first << " | " << pos.second);
-		}
+        (*this.*spawners[spawnerIndex])();
 	}
 	
 	for (auto sm : sms)
@@ -221,7 +182,8 @@ void SceneA1TakeTwo::Render()
     SceneBase::Render();
     RenderGrid();
 	RenderEntities();
-	for (auto data : texts)
+    RenderInfoTexts();
+	for (const auto& data : texts)
 	{
 		RenderTextOnScreen(meshList[GEO_TEXT],data.text,{0,1,0},data.size,data.loc.first,data.loc.second);
 	}
@@ -268,6 +230,11 @@ void SceneA1TakeTwo::RenderEntities()
 	}
 }
 
+void SceneA1TakeTwo::RenderInfoTexts()
+{
+    RenderTextOnScreen(meshList[GEO_TEXT],"Currently Spawning: " + spawnerNames[spawnerIndex], {1,1,1},40,600,560);
+}
+
 void SceneA1TakeTwo::Exit()
 {
     SceneBase::Exit();
@@ -309,7 +276,7 @@ unsigned SceneA1TakeTwo::LoadImage(const char* filepath)
     GLuint textureID = 0;
     glGenTextures(1,&textureID);
     glBindTexture(GL_TEXTURE_2D,textureID);
-    glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,x,y,0,GL_BGRA,GL_UNSIGNED_BYTE,pixel_data);
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,x,y,0,GL_RGBA,GL_UNSIGNED_BYTE,pixel_data);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR_MIPMAP_LINEAR);
     float maxAnisotropy = 1.f;
@@ -377,7 +344,9 @@ std::pair<double, double> SceneA1TakeTwo::MousePosWorldSpace()
 
 std::pair<double, double> SceneA1TakeTwo::GetRandomLocationOnMap()
 {
-	std::uniform_real_distribution<double> rando(0,600);
+    // Real Map Coordinates are from 0-600
+    // Shrink Random Distribution Area to 100-500
+	std::uniform_real_distribution<double> rando(100,500);
 	return {rando(Application::randomthing),rando(Application::randomthing)};
 }
 
@@ -386,4 +355,53 @@ StateMachine* SceneA1TakeTwo::GetSMFromEntity(Entity* ent)
 	for (auto sm : sms)
 		if (sm->getOwner() == ent) return sm;
 	return nullptr;
+}
+
+void SceneA1TakeTwo::BirdSpawner()
+{
+    auto pos = MousePosWorldSpace();
+    bool xbounds = pos.first > 0 && pos.first < 600;
+    bool ybounds = pos.second > 0 && pos.second < 600;
+    if (xbounds && ybounds)
+    {
+        auto ent = AllGrid.spawnEntity(_normalSquareMesh,_birdTex,
+                                       {static_cast<float>(pos.first),static_cast<float>(pos.second),3});
+        ent->setScale({50,50,50});
+        ent->setTag("birds");
+        std::vector<Entity*> tempTrees(4);
+        tempTrees.assign(_presetTrees, _presetTrees+4);
+        AttachAIToEntity<BirdAI>(ent,tempTrees);
+    }
+}
+
+void SceneA1TakeTwo::BunnySpawner()
+{
+    auto pos = MousePosWorldSpace();
+    bool xbounds = pos.first > 0 && pos.first < 600;
+    bool ybounds = pos.second > 0 && pos.second < 600;
+    if (xbounds && ybounds)
+    {
+        auto ent = AllGrid.spawnEntity(_normalSquareMesh,_bunnyTex,
+                                       {static_cast<float>(pos.first),static_cast<float>(pos.second),2});
+        ent->setScale({20,20,20});
+        ent->setTag("bunnies");
+        AttachAIToEntity<BunnyAI>(ent);
+    }
+}
+
+void SceneA1TakeTwo::BeeSpawner()
+{
+    auto pos = MousePosWorldSpace();
+    bool xbounds = pos.first > 0 && pos.first < 600;
+    bool ybounds = pos.second > 0 && pos.second < 600;
+    if (xbounds && ybounds)
+    {
+        auto ent = AllGrid.spawnEntity(_normalSquareMesh,_beeTex,
+                                       {static_cast<float>(pos.first),static_cast<float>(pos.second),3});
+        ent->setScale({10,10,10});
+        ent->setTag("bees");
+        std::vector<Entity*> tempTrees(4);
+        tempTrees.assign(_presetTrees, _presetTrees+4);
+        AttachAIToEntity<BeeAI>(ent,tempTrees,_beeHive);
+    }
 }
