@@ -9,6 +9,7 @@
 #define BEE_LIFETIME 30
 #define BEE_COST 25.f
 #define HONEY_COST 10.f
+#define BEE_MOVE_SPEED 250
 
 struct HiveData
 {

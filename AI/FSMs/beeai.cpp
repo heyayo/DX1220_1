@@ -18,10 +18,12 @@ BeeAI::BeeAI(Entity* o, const std::vector<Entity*>& trees, Entity* beehive) : St
 	std::uniform_int_distribution<int> rando(0,3);
 	treeTarget = rando(Application::randomthing);
 	
-	getOwner()->setTag("bee");
+	getOwner()->setTag("bees");
 	getOwner()->setScale({10, 10, 10});
 	
 	++hiveData.beeCount;
+
+    _currentState = &harvestPollen;
 }
 
 BeeAI::~BeeAI()
@@ -39,8 +41,6 @@ void BeeAI::Update(double deltaTime)
 		// Kill Self when old
 		BulletBoard::GetInstance().AI_Death_Queue.posts.push_back(this);
 	}
-	if (hiveData.pollenCount > 125)
-		ChangeState(&respondToHive);
 }
 
 void BeeHarvestPollen::Update(double deltaTime)
@@ -50,7 +50,7 @@ void BeeHarvestPollen::Update(double deltaTime)
 	// Move to tree
 	SceneA1TakeTwo::AllGrid.moveEntityAlongGrid(state_machine->getOwner(),
 												beeStateMachine->treeList[beeStateMachine->treeTarget]->getPosition(),
-												100*deltaTime);
+												BEE_MOVE_SPEED*deltaTime);
 	
 	// Tree Detection (Harvest Pollen on touch)
 	auto diff = beeStateMachine->treeList[beeStateMachine->treeTarget]->getPosition() - state_machine->getOwner()->getPosition();
@@ -59,6 +59,12 @@ void BeeHarvestPollen::Update(double deltaTime)
 		beeStateMachine->localPollenStorage += 15.f;
 		beeStateMachine->treeTarget = (beeStateMachine->treeTarget + 1) % 4;
 	}
+
+    if (BeeAI::hiveData.pollenCount > 125)
+    {
+        state_machine->ChangeState(&beeStateMachine->respondToHive);
+        return;
+    }
 	
 	// Move back to Hive when holding enough Pollen
 	if (beeStateMachine->localPollenStorage > 50.f)
@@ -80,6 +86,12 @@ BeeHarvestPollen::BeeHarvestPollen(StateMachine* stateMachine) : State(stateMach
 void BeeDepositPollen::Update(double deltaTime)
 {
 	auto beeSM = static_cast<BeeAI*>(state_machine);
+    if (BeeAI::hiveData.pollenCount > 125)
+    { // TODO BulletBoard to prevent bees helping too much
+        state_machine->ChangeState(&beeSM->respondToHive);
+        return;
+    }
+    SceneA1TakeTwo::AllGrid.moveEntityAlongGrid(state_machine->getOwner(),beeSM->hive->getPosition(),BEE_MOVE_SPEED*deltaTime);
 	auto diff = beeSM->hive->getPosition() - state_machine->getOwner()->getPosition();
 	if (diff.LengthSquared() < (20))
 	{
@@ -105,11 +117,13 @@ BeeDepositPollen::BeeDepositPollen(StateMachine* stateMachine) : State(stateMach
 void BeeRespondToHive::Update(double deltaTime)
 {
 	auto beeSM = static_cast<BeeAI*>(state_machine);
-	
+
+    SceneA1TakeTwo::AllGrid.moveEntityAlongGrid(state_machine->getOwner(),beeSM->hive->getPosition(),BEE_MOVE_SPEED*deltaTime);
 	auto diff = beeSM->hive->getPosition() - state_machine->getOwner()->getPosition();
 	
 	if (BeeAI::hiveData.pollenCount < 10)
 	{
+        LOGINFO("HIVE LACKS POLLEN TO DO ANYTHING | " << state_machine->getOwner());
 		state_machine->ChangeState(&beeSM->harvestPollen);
 		return;
 	}
@@ -119,12 +133,15 @@ void BeeRespondToHive::Update(double deltaTime)
 		{
 			BeeAI::hiveData.pollenCount -= HONEY_COST;
 			BeeAI::hiveData.honeyCount += HONEY_COST;
+            LOGINFO("BEE MAKES HONEY | " << state_machine->getOwner());
 		}
 		else
 		{
 			BeeAI::hiveData.pollenCount -= BEE_COST;
 			// Spawn Bee
-			SceneA1TakeTwo::SpawnAI<BeeAI>(beeSM->treeList,beeSM->hive);
+			auto bee = SceneA1TakeTwo::SpawnAI<BeeAI>(beeSM->treeList,beeSM->hive);
+            bee->setPosition(beeSM->getOwner()->getPosition());
+            LOGINFO("A NEW BEE HAS BEEN BORN | " << state_machine->getOwner());
 		}
 		state_machine->ChangeState(&beeSM->harvestPollen);
 	}
