@@ -50,12 +50,13 @@ class BeeAI : public StateMachine
 {
 public:
 	static HiveData hiveData;
-
+	
 	float localPollenStorage = 0.f;
 	std::vector<Entity*> treeList;
 	int                  treeTarget = 0;
 	Entity* hive;
 	float lifeTime = 0.f;
+	float lifeSpan = 0.f;
 
 	BeeAI(Entity* o, const std::vector<Entity*>& trees, Entity* beehive);
 	~BeeAI();

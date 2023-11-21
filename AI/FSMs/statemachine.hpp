@@ -13,6 +13,7 @@ protected:
 	
 public:
 	StateMachine(Entity* o);
+	virtual ~StateMachine() = default;
 	
 	virtual void Update(double deltaTime);
 	void ChangeState(State* nextState);

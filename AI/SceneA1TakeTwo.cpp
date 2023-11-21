@@ -233,6 +233,7 @@ void SceneA1TakeTwo::RenderEntities()
 void SceneA1TakeTwo::RenderInfoTexts()
 {
     RenderTextOnScreen(meshList[GEO_TEXT],"Currently Spawning: " + spawnerNames[spawnerIndex], {1,1,1},40,600,560);
+    RenderTextOnScreen(meshList[GEO_TEXT],"Bee Count: " + std::to_string(BeeAI::hiveData.beeCount), {1,1,1},40,600,520);
 }
 
 void SceneA1TakeTwo::Exit()

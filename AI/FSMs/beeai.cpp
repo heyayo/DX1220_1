@@ -24,6 +24,10 @@ BeeAI::BeeAI(Entity* o, const std::vector<Entity*>& trees, Entity* beehive) : St
 	++hiveData.beeCount;
 
     _currentState = &harvestPollen;
+	
+	// Varying Lifespan
+	std::uniform_real_distribution<float> randofloat(-10,10);
+	lifeSpan = BEE_LIFETIME + randofloat(Application::randomthing);
 }
 
 BeeAI::~BeeAI()
@@ -36,7 +40,7 @@ void BeeAI::Update(double deltaTime)
 	StateMachine::Update(deltaTime);
 	lifeTime += deltaTime;
 	
-	if (lifeTime > BEE_LIFETIME)
+	if (lifeTime > lifeSpan)
 	{
 		// Kill Self when old
 		BulletBoard::GetInstance().AI_Death_Queue.posts.push_back(this);
@@ -129,7 +133,7 @@ void BeeRespondToHive::Update(double deltaTime)
 	}
 	if (diff.LengthSquared() < (20))
 	{
-		if (BeeAI::hiveData.makeHoneyInsteadOfMakingBeesThreshold > BeeAI::hiveData.beeCount)
+		if (BeeAI::hiveData.makeHoneyInsteadOfMakingBeesThreshold < BeeAI::hiveData.beeCount)
 		{
 			BeeAI::hiveData.pollenCount -= HONEY_COST;
 			BeeAI::hiveData.honeyCount += HONEY_COST;
@@ -150,6 +154,8 @@ void BeeRespondToHive::Update(double deltaTime)
 void BeeRespondToHive::Enter()
 {
 	LOGINFO("Bee Answering To Hive | " << state_machine->getOwner());
+	std::uniform_int_distribution<int> rando(0,3);
+	static_cast<BeeAI*>(state_machine)->treeTarget = rando(Application::randomthing);
 }
 
 void BeeRespondToHive::Exit()
