@@ -9,6 +9,8 @@
 #include <random>
 #include <sstream>
 
+int BirdAI::BirdCount = 0;
+
 BirdAI::BirdAI(Entity* o, const std::vector<Entity*>& trees) : StateMachine(o), _trees(trees)
 {
     // Randomize a tree to migrate to at first;
@@ -17,6 +19,13 @@ BirdAI::BirdAI(Entity* o, const std::vector<Entity*>& trees) : StateMachine(o), 
     _currentState = &migrationState;
 	migrationState.tree = trees[tree_number];
 	// Messager::GetInstance().Register("birds", nullptr); // Same Address for All Birds | Change if needed
+
+    ++BirdCount;
+}
+
+BirdAI::~BirdAI()
+{
+    --BirdCount;
 }
 
 Entity* BirdAI::getRandomTree(Entity* notThisOne)
@@ -184,7 +193,16 @@ void HuntingState::Update(double deltaTime)
 void HuntingState::Enter()
 {
 	LOGINFO("Bird Hunting for Food | " << state_machine->getOwner());
-	prey = SceneA1TakeTwo::AllGrid.findClosestEntity(state_machine->getOwner(),"bunnies",30); // Add Exceptions for Tracked Bunnies
+    const auto& soon_to_die = BulletBoard::GetInstance().AI_Death_Queue.posts;
+    std::vector<Entity*> sooner_to_die(soon_to_die.size());
+    for (auto die : soon_to_die)
+        sooner_to_die.push_back(die->getOwner());
+	prey = SceneA1TakeTwo::AllGrid.findClosestEntity(state_machine->getOwner(),"bunnies",sooner_to_die,30); // Add Exceptions for Tracked Bunnies
+    if (!prey)
+    {
+        state_machine->ChangeState(&static_cast<BirdAI*>(state_machine)->migrationState);
+        return;
+    }
 	BulletBoard::GetInstance().Bird_Prey_Reservation.posts.insert(prey);
 //	Messager::GetInstance().SendMessage("scene",std::make_shared<BirdRequestPreyMessage>(state_machine->getOwner()));
 }

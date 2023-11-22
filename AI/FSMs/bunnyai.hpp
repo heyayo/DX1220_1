@@ -54,7 +54,10 @@ struct BunnyAwaitMate : public State
 class BunnyAI : public StateMachine
 {
 public:
+    static int BunnyCount;
+
 	BunnyAI(Entity* o);
+    ~BunnyAI();
 	
 	float mating_timer = 0.f;
 

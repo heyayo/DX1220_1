@@ -44,7 +44,10 @@ class BirdAI : public StateMachine
 	float hunger = 100.f;
 
 public:
+    static int BirdCount;
+
     BirdAI(Entity* o, const std::vector<Entity*>& trees);
+    ~BirdAI();
 	
 	void Update(double deltaTime);
 	void RenderTexts();

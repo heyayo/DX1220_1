@@ -91,7 +91,7 @@ void BeeDepositPollen::Update(double deltaTime)
 {
 	auto beeSM = static_cast<BeeAI*>(state_machine);
     if (BeeAI::hiveData.pollenCount > 125)
-    { // TODO BulletBoard to prevent bees helping too much
+    {
         state_machine->ChangeState(&beeSM->respondToHive);
         return;
     }
@@ -145,6 +145,7 @@ void BeeRespondToHive::Update(double deltaTime)
 			// Spawn Bee
 			auto bee = SceneA1TakeTwo::SpawnAI<BeeAI>(beeSM->treeList,beeSM->hive);
             bee->setPosition(beeSM->getOwner()->getPosition());
+            bee->setTag("bees");
             LOGINFO("A NEW BEE HAS BEEN BORN | " << state_machine->getOwner());
 		}
 		state_machine->ChangeState(&beeSM->harvestPollen);

@@ -8,6 +8,8 @@
 
 #include "logging.hpp"
 
+int BunnyAI::BunnyCount = 0;
+
 BunnyAI::BunnyAI(Entity* o) : StateMachine(o)
 {
 	_currentState = &wander;
@@ -17,6 +19,13 @@ BunnyAI::BunnyAI(Entity* o) : StateMachine(o)
 	auto randomPosition = SceneA1TakeTwo::GetRandomLocationOnMap();
 	wander.xTarget = randomPosition.first;
 	wander.yTarget = randomPosition.second;
+
+    ++BunnyCount;
+}
+
+BunnyAI::~BunnyAI()
+{
+    --BunnyCount;
 }
 
 void BunnyAI::Update(double deltaTime)
@@ -39,6 +48,12 @@ void SelfPopulationControlByImplodingState::Enter()
 {
 	LOGINFO("Bunny Deciding Whether Or Not To Self-Implode | " << state_machine->getOwner());
 	timer = 0.f;
+    auto iter = BulletBoard::GetInstance().Bird_Prey_Reservation.posts.find(state_machine->getOwner());
+    if (iter == BulletBoard::GetInstance().Bird_Prey_Reservation.posts.end())
+    {
+        state_machine->ChangeState(&static_cast<BunnyAI*>(state_machine)->wander);
+        return;
+    }
 	auto vec = SceneA1TakeTwo::AllGrid.getAllWithTag("bunnies");
 	if (vec.size() > 20)
 	{
