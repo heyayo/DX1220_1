@@ -5,7 +5,8 @@
 #include "state.hpp"
 
 #define BUNNY_MATE_PROXIMITY 10
-#define BUNNY_MATING_FREQUENCY 5
+#define BUNNY_MATING_FREQUENCY 2
+#define BUNNY_LIMITS 50
 
 struct SelfPopulationControlByImplodingState : public State
 {

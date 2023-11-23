@@ -16,7 +16,7 @@ struct InfoMsgRenderData
 	float size = 10.f;
 };
 
-#define SPAWNER_FUCTION_COUNT 3
+#define SPAWNER_FUCTION_COUNT 4
 
 class SceneA1TakeTwo : public SceneBase
 {
@@ -27,6 +27,7 @@ class SceneA1TakeTwo : public SceneBase
     void BirdSpawner();
     void BunnySpawner();
     void BeeSpawner();
+    void BuzzardSpawner();
 
     Mtx44 _projectionMatrix;
     Mtx44 _viewMatrix;
@@ -35,7 +36,7 @@ class SceneA1TakeTwo : public SceneBase
 	Mesh* _blackSquareMesh;
 	static Mesh* _normalSquareMesh;
 	static unsigned int
-	_birdTex,_bunnyTex,_beehiveTex,_beeTex,_treeTex;
+	_birdTex,_bunnyTex,_beeTex,_buzzardTex,_beehiveTex,_treeTex;
 	
 	int staticWidth;
 	int staticHeight;

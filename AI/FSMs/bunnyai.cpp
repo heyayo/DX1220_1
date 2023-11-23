@@ -49,13 +49,13 @@ void SelfPopulationControlByImplodingState::Enter()
 	LOGINFO("Bunny Deciding Whether Or Not To Self-Implode | " << state_machine->getOwner());
 	timer = 0.f;
     auto iter = BulletBoard::GetInstance().Bird_Prey_Reservation.posts.find(state_machine->getOwner());
-    if (iter == BulletBoard::GetInstance().Bird_Prey_Reservation.posts.end())
+    if (iter != BulletBoard::GetInstance().Bird_Prey_Reservation.posts.end())
     {
         state_machine->ChangeState(&static_cast<BunnyAI*>(state_machine)->wander);
         return;
     }
 	auto vec = SceneA1TakeTwo::AllGrid.getAllWithTag("bunnies");
-	if (vec.size() > 20)
+	if (vec.size() > BUNNY_LIMITS)
 	{
 		// Bullet Board Death Queue
 		BulletBoard::GetInstance().AI_Death_Queue.posts.push_back(state_machine);
@@ -97,7 +97,7 @@ void BunnyWander::Update(double deltaTime)
 //	Messager::GetInstance().SendMessage("scene",std::make_shared<MoveEntityUsingVectorMessage>(state_machine->getOwner(),10*deltaTime,x,y));
 	auto myPos = state_machine->getOwner()->getPosition();
 	Vector3 target{xTarget,yTarget,myPos.z};
-	SceneA1TakeTwo::AllGrid.moveEntityAlongGrid(state_machine->getOwner(),target,30*deltaTime);
+	SceneA1TakeTwo::AllGrid.moveEntityAlongGrid(state_machine->getOwner(),target,120*deltaTime);
 	if ((target - myPos).LengthSquared() < (BUNNY_MATE_PROXIMITY))
 	{
 		LOGINFO("Bunny Wander Target | " << target.x << '|' << target.y);
@@ -132,7 +132,7 @@ void BunnyBreed::Update(double deltaTime)
 	}
 	
 	// Move towards Mate
-	SceneA1TakeTwo::AllGrid.moveEntityAlongGrid(state_machine->getOwner(),mate->getPosition(),50*deltaTime);
+	SceneA1TakeTwo::AllGrid.moveEntityAlongGrid(state_machine->getOwner(),mate->getPosition(),130*deltaTime);
 	auto diff = mate->getPosition() - state_machine->getOwner()->getPosition();
 	if (diff.LengthSquared() < (BUNNY_MATE_PROXIMITY))
 	{

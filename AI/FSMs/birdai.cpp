@@ -3,7 +3,6 @@
 #include "SceneA1TakeTwo.hpp"
 #include "logging.hpp"
 #include "Application.h"
-// #include "messager.hpp"
 #include "bulletboard.hpp"
 
 #include <random>
@@ -80,7 +79,7 @@ void BirdAI::addHunger(float value)
 float BirdAI::getMoveSpeed()
 {
 	// More Movespeed when hungrier
-	return 50.0f + (100.0f - hunger);
+	return 80.0f + (100.0f - hunger);
 }
 
 MigrationState::MigrationState(StateMachine* stateMachine) : State(stateMachine) {}
@@ -122,7 +121,7 @@ void PerchState::Update(double deltaTime)
 {
 	static double timer = 0.f;
 	timer += deltaTime;
-	if (static_cast<BirdAI*>(state_machine)->getHunger() < 60)
+	if (static_cast<BirdAI*>(state_machine)->getHunger() < 80)
 	{
 		state_machine->ChangeState(&static_cast<BirdAI*>(state_machine)->huntingState);
 		timer = 0.f;

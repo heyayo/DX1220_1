@@ -8,6 +8,7 @@
 #include "FSMs/birdai.hpp"
 #include "FSMs/bunnyai.hpp"
 #include "FSMs/beeai.hpp"
+#include "FSMs/buzzardai.hpp"
 
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
@@ -26,10 +27,11 @@ std::vector<StateMachine*> SceneA1TakeTwo::sms;
 Mesh* SceneA1TakeTwo::_normalSquareMesh;
 
 unsigned int
-SceneA1TakeTwo::_treeTex,
-SceneA1TakeTwo::_bunnyTex,
 SceneA1TakeTwo::_birdTex,
+SceneA1TakeTwo::_bunnyTex,
 SceneA1TakeTwo::_beeTex,
+SceneA1TakeTwo::_buzzardTex,
+SceneA1TakeTwo::_treeTex,
 SceneA1TakeTwo::_beehiveTex;
 
 void SceneA1TakeTwo::Init()
@@ -67,13 +69,14 @@ void SceneA1TakeTwo::Init()
             "BlackMesh",
             {0,0,0});
 	_normalSquareMesh = MeshBuilder::GenerateQuad(
-            "MeleeUnit",
+            "TexturedMesh",
             {1,1,1}
     );
 	_birdTex = LoadImage("Image/berd.jpg");
 	_bunnyTex = LoadImage("Image/bunny.jpg");
-	_beehiveTex = LoadImage("Image/beehive.jpeg");
 	_beeTex = LoadImage("Image/bee.jpg");
+    _buzzardTex = LoadImage("Image/buzzard.jpg");
+	_beehiveTex = LoadImage("Image/beehive.jpeg");
     _treeTex = LoadImage("Image/tree.jpg");
 
     // Initialize Grid System
@@ -97,9 +100,11 @@ void SceneA1TakeTwo::Init()
     spawners[0] = &SceneA1TakeTwo::BirdSpawner;
     spawners[1] = &SceneA1TakeTwo::BunnySpawner;
     spawners[2] = &SceneA1TakeTwo::BeeSpawner;
+    spawners[3] = &SceneA1TakeTwo::BuzzardSpawner;
     spawnerNames[0] = "Birds";
     spawnerNames[1] = "Bunnies";
     spawnerNames[2] = "Bees";
+    spawnerNames[3] = "Buzzards";
 
 	Messager::GetInstance().Register("scene", nullptr);
 	
@@ -233,7 +238,10 @@ void SceneA1TakeTwo::RenderEntities()
 void SceneA1TakeTwo::RenderInfoTexts()
 {
     RenderTextOnScreen(meshList[GEO_TEXT],"Currently Spawning: " + spawnerNames[spawnerIndex], {1,1,1},40,600,560);
-    RenderTextOnScreen(meshList[GEO_TEXT],"Bee Count: " + std::to_string(BeeAI::hiveData.beeCount), {1,1,1},40,600,520);
+    RenderTextOnScreen(meshList[GEO_TEXT],"Birds Alive: " + std::to_string(BirdAI::BirdCount), {1,1,1},40,600,520);
+    RenderTextOnScreen(meshList[GEO_TEXT],"Bunnies Alive: " + std::to_string(BunnyAI::BunnyCount), {1,1,1},40,600,480);
+    RenderTextOnScreen(meshList[GEO_TEXT],"Bees Alive: " + std::to_string(BeeAI::hiveData.beeCount), {1,1,1},40,600,440);
+    RenderTextOnScreen(meshList[GEO_TEXT],"Buzzards Alive: " + std::to_string(BuzzardAI::BuzzardCount), {1,1,1},40,600,400);
 }
 
 void SceneA1TakeTwo::Exit()
@@ -404,5 +412,20 @@ void SceneA1TakeTwo::BeeSpawner()
         std::vector<Entity*> tempTrees(4);
         tempTrees.assign(_presetTrees, _presetTrees+4);
         AttachAIToEntity<BeeAI>(ent,tempTrees,_beeHive);
+    }
+}
+
+void SceneA1TakeTwo::BuzzardSpawner()
+{
+    auto pos = MousePosWorldSpace();
+    bool xbounds = pos.first > 0 && pos.first < 600;
+    bool ybounds = pos.second > 0 && pos.second < 600;
+    if (xbounds && ybounds)
+    {
+        auto ent = AllGrid.spawnEntity(_normalSquareMesh,_buzzardTex,
+                                       {static_cast<float>(pos.first),static_cast<float>(pos.second),3});
+        ent->setScale({60,60,60});
+        ent->setTag("buzzards");
+        AttachAIToEntity<BuzzardAI>(ent);
     }
 }

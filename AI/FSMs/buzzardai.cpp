@@ -12,15 +12,21 @@
 
 int BuzzardAI::BuzzardCount = 0;
 
-BuzzardAI::BuzzardAI(Entity* o) : StateMachine(o) {}
+BuzzardAI::BuzzardAI(Entity* o) : StateMachine(o)
+{
+    _currentState = &watchPop;
+    auto pos = SceneA1TakeTwo::GetRandomLocationOnMap();
+    watchPop.x = pos.first;
+    watchPop.y = pos.second;
+    ++BuzzardCount;
+}
+BuzzardAI::~BuzzardAI() { --BuzzardCount; }
 
 void BuzzardAI::Update(double deltaTime)
 {
     StateMachine::Update(deltaTime);
     hunger -= deltaTime * BUZZARD_HUNGER_RATE;
-    ++BuzzardCount;
 }
-BuzzardAI::~BuzzardAI() { --BuzzardCount; }
 
 WatchPopulations::WatchPopulations(StateMachine* stateMachine) : State(stateMachine) {}
 
@@ -33,7 +39,8 @@ void WatchPopulations::Update(double deltaTime)
     auto diff = target - pos;
     if (diff.LengthSquared() < (10))
     {
-        state_machine->ChangeState(&sm->circle);
+        sm->prey = SceneA1TakeTwo::AllGrid.findClosestEntity(state_machine->getOwner(),"bunnies",30);
+        state_machine->ChangeState(&sm->runTo);
     }
 }
 
@@ -81,10 +88,7 @@ void HuntPrey::Exit()
     static_cast<BuzzardAI*>(state_machine)->prey = nullptr;
 }
 
-CirclePrey::CirclePrey(StateMachine* stateMachine) : State(stateMachine)
-{
-
-}
+CirclePrey::CirclePrey(StateMachine* stateMachine) : State(stateMachine) {}
 
 void CirclePrey::Update(double deltaTime)
 {
@@ -102,23 +106,67 @@ void CirclePrey::Update(double deltaTime)
     target.x += sin;
     target.y += cos;
 
+    SceneA1TakeTwo::AllGrid.teleportEntity(state_machine->getOwner(),target);
+
+    auto pos = state_machine->getOwner()->getPosition();
+    auto diff = target - pos;
+    if (diff.LengthSquared() < (BUZZARD_SPEED * deltaTime))
+        timer += deltaTime;
+
+    if (timer > 5)
+        state_machine->ChangeState(&sm->hunting);
+}
+
+void CirclePrey::Enter()
+{
+    LOGINFO("Buzzard Circling Prey | " << state_machine->getOwner());
+    circleEngine = 0.f;
+    timer = 0.f;
+}
+
+void CirclePrey::Exit()
+{
+    LOGINFO("Buzzard Engaging Prey or Backing off | " << state_machine->getOwner());
+}
+
+RunToCirclePrey::RunToCirclePrey(StateMachine* stateMachine) : State(stateMachine) {}
+
+void RunToCirclePrey::Update(double deltaTime)
+{
+    static const float sinNo = static_cast<float>(std::sin(0));
+    static const float cosNo = static_cast<float>(std::cos(0));
+
+    auto sm = static_cast<BuzzardAI*>(state_machine);
+    if (!sm->prey)
+    {
+        sm->ChangeState(&sm->watchPop);
+        return;
+    }
+
+    float sin = sinNo * BUZZARD_CIRCLE_RADIUS;
+    float cos = cosNo * BUZZARD_CIRCLE_RADIUS;
+    auto target = sm->prey->getPosition();
+    target.x += sin;
+    target.y += cos;
+
     SceneA1TakeTwo::AllGrid.moveEntityAlongGrid
     (state_machine->getOwner(),
     target,
     BUZZARD_SPEED*deltaTime);
 
-    if (circleEngine > 5)
+    auto diff = sm->prey->getPosition() - state_machine->getOwner()->getPosition();
+    if (diff.LengthSquared() < (20))
     {
-        state_machine->ChangeState(&sm->hunting);
+        sm->ChangeState(&sm->circle);
     }
 }
 
-void CirclePrey::Enter()
+void RunToCirclePrey::Enter()
 {
-    circleEngine = 0.f;
+    LOGINFO("Buzzard Flying To Prey | " << state_machine->getOwner());
 }
 
-void CirclePrey::Exit()
+void RunToCirclePrey::Exit()
 {
 
 }

@@ -6,8 +6,8 @@
 
 #define BUZZARD_HUNGER_RATE 2
 #define BUZZARD_LIMIT 3
-#define BUZZARD_SPEED 180
-#define BUZZARD_CIRCLE_RADIUS 15
+#define BUZZARD_SPEED 200
+#define BUZZARD_CIRCLE_RADIUS 150
 
 struct WatchPopulations : public State
 {
@@ -31,8 +31,17 @@ struct HuntPrey : public State
 struct CirclePrey : public State
 {
     float circleEngine = 0.f;
+    float timer = 0.f;
 
     CirclePrey(StateMachine* stateMachine);
+    virtual void Update(double deltaTime) override;
+    virtual void Enter() override;
+    virtual void Exit() override;
+};
+
+struct RunToCirclePrey : public State
+{
+    RunToCirclePrey(StateMachine* stateMachine);
     virtual void Update(double deltaTime) override;
     virtual void Enter() override;
     virtual void Exit() override;
@@ -55,6 +64,7 @@ public:
     WatchPopulations watchPop{this};
     HuntPrey hunting{this};
     CirclePrey circle{this};
+    RunToCirclePrey runTo{this};
 };
 
 
