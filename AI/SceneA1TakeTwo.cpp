@@ -113,6 +113,45 @@ void SceneA1TakeTwo::Init()
 		for (auto sm : death_list)
 			SceneA1TakeTwo::KillAI(sm);
 		};
+
+	// Spawn the initial Batch
+	for (int i = 0; i < 4; ++i)
+	{
+		auto pos = std::make_pair(300.f,300.f);
+		auto ent = AllGrid.spawnEntity(_normalSquareMesh,_birdTex,
+									   {(pos.first),(pos.second),3});
+		ent->setScale({50,50,50});
+		ent->setTag("birds");
+		std::vector<Entity*> tempTrees(4);
+		tempTrees.assign(_presetTrees, _presetTrees+4);
+		AttachAIToEntity<BirdAI>(ent,tempTrees);
+	}
+	for (int i = 0; i < 20; ++i)
+	{
+		auto pos = std::make_pair(300.f,300.f);
+		auto ent = AllGrid.spawnEntity(_normalSquareMesh,_bunnyTex,
+									   {(pos.first),(pos.second),2});
+		ent->setScale({20,20,20});
+		ent->setTag("bunnies");
+		AttachAIToEntity<BunnyAI>(ent);
+	}
+	for (int i = 0; i < 30; ++i)
+	{
+		auto pos = std::make_pair(300.f,300.f);
+		auto ent = AllGrid.spawnEntity(_normalSquareMesh,_beeTex,
+									   {(pos.first),(pos.second),3});
+		ent->setScale({10,10,10});
+		ent->setTag("bees");
+		std::vector<Entity*> tempTrees(4);
+		tempTrees.assign(_presetTrees, _presetTrees+4);
+		AttachAIToEntity<BeeAI>(ent,tempTrees,_beeHive);
+	}
+	auto pos = std::make_pair(300.f,300.f);
+	auto ent = AllGrid.spawnEntity(_normalSquareMesh,_buzzardTex,
+								   {(pos.first),(pos.second),3});
+	ent->setScale({60,60,60});
+	ent->setTag("buzzards");
+	AttachAIToEntity<BuzzardAI>(ent);
 }
 
 void SceneA1TakeTwo::Update(double deltaTime)
@@ -306,6 +345,7 @@ void SceneA1TakeTwo::KillAI(StateMachine* machine)
 {
     // Find StateMachine in Structure
     auto iter = std::find(sms.begin(), sms.end(), machine);
+	if (iter == sms.end()) return;
     sms.erase(iter);
 
     // Kill Entity and Free StateMachine Memory
