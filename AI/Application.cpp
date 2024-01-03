@@ -11,10 +11,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "SceneMovement.h"
-#include "SceneTicTacToe.h"
+#include "SceneA2.hpp"
 
 std::mt19937 Application::randomthing;
+double Application::DELTATIME = 0.0;
 
 GLFWwindow* m_window;
 const unsigned char FPS = 60; // FPS of this game
@@ -89,6 +89,7 @@ void Application::Init()
 {
 	//Set the error callback
 	glfwSetErrorCallback(error_callback);
+    //glfwSetKeyCallback(m_window,key_callback);
 
 	//Initialize GLFW
 	if (!glfwInit())
@@ -139,19 +140,19 @@ void Application::Init()
     randomthing.seed(rd());
 }
 
-#include "SceneA1TakeTwo.hpp"
 #include <string.h>
 
 void Application::Run()
 {
 	//Main Loop
-	Scene *scene = new SceneA1TakeTwo();
+	Scene *scene = new SceneA2();
 	scene->Init();
 
 	m_timer.startTimer();    // Start timer to calculate how long it takes to render this frame
 	while (!glfwWindowShouldClose(m_window) && !IsKeyPressed(GLFW_KEY_ESCAPE))
 	{
-		scene->Update(m_timer.getElapsedTime());
+        DELTATIME = m_timer.getElapsedTime();
+		scene->Update(DELTATIME);
 		scene->Render();
         memcpy(_mouseRecords,_mouseCurrent,sizeof(bool)*3);
 		//Swap buffers
@@ -177,3 +178,40 @@ void* Application::GetWindowPtr()
 {
 	return m_window;
 }
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+unsigned Application::LoadImage(const char* filepath)
+{
+    int x,y,n;
+    unsigned char* pixel_data = stbi_load(filepath,&x,&y,&n,4);
+    if (!pixel_data)
+    {
+        std::cerr << "Failed To Load Image | " << filepath << std::endl;
+        std::cerr << stbi_failure_reason() << std::endl;
+        return 0;
+    }
+
+    GLuint textureID = 0;
+    glGenTextures(1,&textureID);
+    glBindTexture(GL_TEXTURE_2D,textureID);
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,x,y,0,GL_RGBA,GL_UNSIGNED_BYTE,pixel_data);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR_MIPMAP_LINEAR);
+    float maxAnisotropy = 1.f;
+    glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnisotropy);
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, (GLint)maxAnisotropy );
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glGenerateMipmap( GL_TEXTURE_2D );
+
+    stbi_image_free(pixel_data);
+
+    return textureID;
+}
+
+void *Application::getWindow()
+{ return m_window; }

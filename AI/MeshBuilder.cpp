@@ -70,8 +70,8 @@ Generate the vertices of a quad; Use random color for each vertex
 Then generate the VBO/IBO and store them in Mesh object
 
 \param meshName - name of mesh
-\param lengthX - width of quad
-\param lengthY - height of quad
+\param lengthX - _width of quad
+\param lengthY - _height of quad
 
 \return Pointer to mesh storing VBO/IBO of quad
 */
@@ -130,8 +130,8 @@ Generate the vertices of a cube; Use random color for each vertex
 Then generate the VBO/IBO and store them in Mesh object
 
 \param meshName - name of mesh
-\param lengthX - width of cube
-\param lengthY - height of cube
+\param lengthX - _width of cube
+\param lengthY - _height of cube
 \param lengthZ - depth of cube
 
 \return Pointer to mesh storing VBO/IBO of cube

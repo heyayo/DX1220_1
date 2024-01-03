@@ -5,11 +5,14 @@
 
 #include <vector>
 
+using vec2 = std::pair<int,int>;
+
 class GridSystem
 {
     struct CellData
     {
         std::vector<Entity*> entities;
+        unsigned texture;
     };
 
     int _gridWidth = 0;
@@ -30,10 +33,10 @@ class GridSystem
 	Entity* SpiralSearch(Entity* ent, const char* tag, int startingIndex, int depth);
     Entity* SpiralSearch(Entity* ent, const std::vector<Entity*>& exceptions, int startingIndex, int depth);
     Entity* SpiralSearch(Entity* ent, const char* tag, const std::vector<Entity*>& exceptions, int startingIndex, int depth);
-    Entity* CheckForCandidate(Entity* ent, int index);
-    Entity* CheckForCandidate(Entity* ent, const char* tag, int index);
-    Entity* CheckForCandidate(Entity* ent, const std::vector<Entity*>& exceptions, int index);
-    Entity* CheckForCandidate(Entity* ent, const std::vector<Entity*>& exceptions, const char* tag, int index);
+    Entity* FindEntity(Entity* ent, int index);
+    Entity* FindEntity(Entity* ent, const char* tag, int index);
+    Entity* FindEntity(Entity* ent, const std::vector<Entity*>& exceptions, int index);
+    Entity* FindEntity(Entity* ent, const std::vector<Entity*>& exceptions, const char* tag, int index);
 
     std::vector<Entity*>::iterator GetEntityIteratorFromCell(Entity* ent, int index);
 
@@ -52,6 +55,7 @@ public:
     { return { _cellWidth, _cellHeight }; }
 	constexpr const std::vector<Entity*>& getAllEntities()
 	{ return _allEntities; }
+    CellData& indexInto(int index);
 	
     Entity* spawnEntity(Mesh* mesh, unsigned tex);
     Entity* spawnEntity(Mesh* mesh, unsigned tex, const Vector3& loc);
@@ -67,6 +71,8 @@ public:
     Entity* findClosestEntity(Entity* ent, const std::vector<Entity*>& exceptions, int radius);
     Entity* findClosestEntity(Entity* ent, const char* tag, const std::vector<Entity*>& exceptions, int radius);
     std::vector<Entity*> getAllWithTag(const char* tag);
+
+    std::pair<int,int> getCoordinatesFromIndex(int index);
 };
 
 

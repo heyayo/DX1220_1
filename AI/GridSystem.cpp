@@ -25,6 +25,8 @@ void GridSystem::init(int gridWidth, int gridHeight, float cellWidth, float cell
         _grid = nullptr;
     }
     _grid = new CellData[gridWidth * gridHeight];
+    for (int i = 0; i < gridWidth*gridHeight; ++i)
+        _grid[i].texture = 0;
 }
 
 Entity* GridSystem::spawnEntity(Mesh* mesh, unsigned tex)
@@ -180,7 +182,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, int startingIndex, int depth)
 	if (curr >= grid_boundary || curr < 0)
 		returnVal = nullptr;
 	else
-	    returnVal = CheckForCandidate(ent, curr);
+	    returnVal = FindEntity(ent, curr);
     if (returnVal) return returnVal;
     for (int i = 0; i < depth; ++i)
     {
@@ -191,7 +193,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, int startingIndex, int depth)
 			continue; // Skip Candidate Checks | There are no Candidates | Continue instead of Break to keep continuity of Spiral Search
 		}
 		else
-	        returnVal = CheckForCandidate(ent, curr);
+	        returnVal = FindEntity(ent, curr);
         if (returnVal) return returnVal;
     }
     for (int i = 0; i < doubleDepth; ++i)
@@ -203,7 +205,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, int startingIndex, int depth)
 			continue;
 		}
 		else
-			returnVal = CheckForCandidate(ent, curr);
+			returnVal = FindEntity(ent, curr);
         if (returnVal) return returnVal;
     }
     for (int i = 0; i < doubleDepth; ++i)
@@ -215,7 +217,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, int startingIndex, int depth)
 			continue;
 		}
 		else
-			returnVal = CheckForCandidate(ent, curr);
+			returnVal = FindEntity(ent, curr);
         if (returnVal) return returnVal;
     }
     for (int i = 0; i < doubleDepth; ++i)
@@ -227,7 +229,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, int startingIndex, int depth)
 			continue;
 		}
 		else
-			returnVal = CheckForCandidate(ent, curr);
+			returnVal = FindEntity(ent, curr);
         if (returnVal) return returnVal;
     }
     for (int i = 0; i < depth; ++i)
@@ -239,7 +241,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, int startingIndex, int depth)
 			continue;
 		}
 		else
-			returnVal = CheckForCandidate(ent, curr);
+			returnVal = FindEntity(ent, curr);
         if (returnVal) return returnVal;
     }
 
@@ -259,7 +261,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, const char* tag, int startingIndex
     if (curr >= grid_boundary || curr < 0)
         returnVal           = nullptr;
     else
-        returnVal = CheckForCandidate(ent, tag, curr);
+        returnVal = FindEntity(ent, tag, curr);
 	if (returnVal) return returnVal;
 	for (int i = 0; i < depth; ++i)
 	{
@@ -270,7 +272,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, const char* tag, int startingIndex
 			continue;
 		}
 		else
-			returnVal = CheckForCandidate(ent, tag, curr);
+			returnVal = FindEntity(ent, tag, curr);
 		if (returnVal) return returnVal;
 	}
 	for (int i = 0; i < doubleDepth; ++i)
@@ -282,7 +284,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, const char* tag, int startingIndex
 			continue;
 		}
 		else
-			returnVal = CheckForCandidate(ent, tag, curr);
+			returnVal = FindEntity(ent, tag, curr);
 		if (returnVal) return returnVal;
 	}
 	for (int i = 0; i < doubleDepth; ++i)
@@ -294,7 +296,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, const char* tag, int startingIndex
 			continue;
 		}
 		else
-			returnVal = CheckForCandidate(ent, tag, curr);
+			returnVal = FindEntity(ent, tag, curr);
 		if (returnVal) return returnVal;
 	}
 	for (int i = 0; i < doubleDepth; ++i)
@@ -306,7 +308,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, const char* tag, int startingIndex
 			continue;
 		}
 		else
-			returnVal = CheckForCandidate(ent, tag, curr);
+			returnVal = FindEntity(ent, tag, curr);
 		if (returnVal) return returnVal;
 	}
 	for (int i = 0; i < depth; ++i)
@@ -318,7 +320,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, const char* tag, int startingIndex
 			continue;
 		}
 		else
-			returnVal = CheckForCandidate(ent, tag, curr);
+			returnVal = FindEntity(ent, tag, curr);
 		if (returnVal) return returnVal;
 	}
 	
@@ -339,7 +341,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, const std::vector<Entity*> &except
     if (curr >= grid_boundary || curr < 0)
         returnVal           = nullptr;
     else
-        returnVal = CheckForCandidate(ent, exceptions, curr);
+        returnVal = FindEntity(ent, exceptions, curr);
     if (returnVal) return returnVal;
     for (int i = 0; i < depth; ++i)
     {
@@ -350,7 +352,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, const std::vector<Entity*> &except
             continue; // Skip Candidate Checks | There are no Candidates | Continue instead of Break to keep continuity of Spiral Search
         }
         else
-            returnVal = CheckForCandidate(ent, exceptions, curr);
+            returnVal = FindEntity(ent, exceptions, curr);
         if (returnVal) return returnVal;
     }
     for (int i = 0; i < doubleDepth; ++i)
@@ -362,7 +364,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, const std::vector<Entity*> &except
             continue;
         }
         else
-            returnVal = CheckForCandidate(ent, exceptions, curr);
+            returnVal = FindEntity(ent, exceptions, curr);
         if (returnVal) return returnVal;
     }
     for (int i = 0; i < doubleDepth; ++i)
@@ -374,7 +376,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, const std::vector<Entity*> &except
             continue;
         }
         else
-            returnVal = CheckForCandidate(ent, exceptions, curr);
+            returnVal = FindEntity(ent, exceptions, curr);
         if (returnVal) return returnVal;
     }
     for (int i = 0; i < doubleDepth; ++i)
@@ -386,7 +388,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, const std::vector<Entity*> &except
             continue;
         }
         else
-            returnVal = CheckForCandidate(ent, exceptions, curr);
+            returnVal = FindEntity(ent, exceptions, curr);
         if (returnVal) return returnVal;
     }
     for (int i = 0; i < depth; ++i)
@@ -398,7 +400,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, const std::vector<Entity*> &except
             continue;
         }
         else
-            returnVal = CheckForCandidate(ent, exceptions, curr);
+            returnVal = FindEntity(ent, exceptions, curr);
         if (returnVal) return returnVal;
     }
 
@@ -419,7 +421,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, const char* tag, const std::vector
     if (curr >= grid_boundary || curr < 0)
         returnVal           = nullptr;
     else
-        returnVal = CheckForCandidate(ent, exceptions, tag, curr);
+        returnVal = FindEntity(ent, exceptions, tag, curr);
     if (returnVal) return returnVal;
     for (int i = 0; i < depth; ++i)
     {
@@ -430,7 +432,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, const char* tag, const std::vector
             continue;
         }
         else
-            returnVal = CheckForCandidate(ent, exceptions, tag, curr);
+            returnVal = FindEntity(ent, exceptions, tag, curr);
         if (returnVal) return returnVal;
     }
     for (int i = 0; i < doubleDepth; ++i)
@@ -442,7 +444,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, const char* tag, const std::vector
             continue;
         }
         else
-            returnVal = CheckForCandidate(ent, exceptions, tag, curr);
+            returnVal = FindEntity(ent, exceptions, tag, curr);
         if (returnVal) return returnVal;
     }
     for (int i = 0; i < doubleDepth; ++i)
@@ -454,7 +456,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, const char* tag, const std::vector
             continue;
         }
         else
-            returnVal = CheckForCandidate(ent, exceptions, tag, curr);
+            returnVal = FindEntity(ent, exceptions, tag, curr);
         if (returnVal) return returnVal;
     }
     for (int i = 0; i < doubleDepth; ++i)
@@ -466,7 +468,7 @@ Entity* GridSystem::SpiralSearch(Entity* ent, const char* tag, const std::vector
             continue;
         }
         else
-            returnVal = CheckForCandidate(ent, exceptions, tag, curr);
+            returnVal = FindEntity(ent, exceptions, tag, curr);
         if (returnVal) return returnVal;
     }
     for (int i = 0; i < depth; ++i)
@@ -478,14 +480,14 @@ Entity* GridSystem::SpiralSearch(Entity* ent, const char* tag, const std::vector
             continue;
         }
         else
-            returnVal = CheckForCandidate(ent, exceptions, tag, curr);
+            returnVal = FindEntity(ent, exceptions, tag, curr);
         if (returnVal) return returnVal;
     }
 
     return returnVal;
 }
 
-Entity* GridSystem::CheckForCandidate(Entity* ent, int index)
+Entity* GridSystem::FindEntity(Entity* ent, int index)
 {
     auto& cell = _grid[index].entities;
     if (!cell.empty())
@@ -494,7 +496,7 @@ Entity* GridSystem::CheckForCandidate(Entity* ent, int index)
     return nullptr;
 }
 
-Entity* GridSystem::CheckForCandidate(Entity* ent, const char* tag, int index)
+Entity* GridSystem::FindEntity(Entity* ent, const char* tag, int index)
 {
 	auto& cell = _grid[index].entities;
 	if (!cell.empty())
@@ -503,7 +505,7 @@ Entity* GridSystem::CheckForCandidate(Entity* ent, const char* tag, int index)
 	return nullptr;
 }
 
-Entity* GridSystem::CheckForCandidate(Entity* ent, const std::vector<Entity*> &exceptions, int index)
+Entity* GridSystem::FindEntity(Entity* ent, const std::vector<Entity*> &exceptions, int index)
 {
     auto& cell = _grid[index].entities;
     if (!cell.empty())
@@ -520,7 +522,7 @@ Entity* GridSystem::CheckForCandidate(Entity* ent, const std::vector<Entity*> &e
     return nullptr;
 }
 
-Entity* GridSystem::CheckForCandidate(Entity* ent, const std::vector<Entity*> &exceptions, const char* tag, int index)
+Entity* GridSystem::FindEntity(Entity* ent, const std::vector<Entity*> &exceptions, const char* tag, int index)
 {
     auto& cell = _grid[index].entities;
     if (!cell.empty())
@@ -568,3 +570,13 @@ int GridSystem::LeftIndex(int index)
 { return index - 1; }
 int GridSystem::RightIndex(int index)
 { return index + 1; }
+
+std::pair<int, int> GridSystem::getCoordinatesFromIndex(int index)
+{
+    int yPos = index / _gridWidth;
+    int xPos = index % _gridWidth;
+    return {xPos,yPos};
+}
+
+GridSystem::CellData &GridSystem::indexInto(int index)
+{ return _grid[index]; }

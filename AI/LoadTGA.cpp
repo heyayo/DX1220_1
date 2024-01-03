@@ -23,8 +23,8 @@ GLuint LoadTGA(const char *file_path)				// load TGA file to memory
 	width = header[12] + header[13] * 256;
 	height = header[14] + header[15] * 256;
 
- 	if(	width <= 0 ||								// is width <= 0
-		height <= 0 ||								// is height <=0
+ 	if(	width <= 0 ||								// is _width <= 0
+		height <= 0 ||								// is _height <=0
 		(header[16] != 24 && header[16] != 32))		// is TGA 24 or 32 Bit
 	{
 		fileStream.close();							// close file on failure

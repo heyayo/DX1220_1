@@ -24,8 +24,11 @@ public:
 	static int GetWindowWidth();
 	static int GetWindowHeight();
 	static void* GetWindowPtr();
+    static unsigned LoadImage(const char* filepath);
+    static void* getWindow();
 
     static std::mt19937 randomthing;
+    static double DELTATIME;
 
 private:
 	Application();
@@ -36,6 +39,7 @@ private:
 
 	//Declare a window object
 	StopWatch m_timer;
+
 };
 
 #endif

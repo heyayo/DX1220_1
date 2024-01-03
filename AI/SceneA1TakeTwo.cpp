@@ -72,12 +72,12 @@ void SceneA1TakeTwo::Init()
             "TexturedMesh",
             {1,1,1}
     );
-	_birdTex = LoadImage("Image/berd.jpg");
-	_bunnyTex = LoadImage("Image/bunny.jpg");
-	_beeTex = LoadImage("Image/bee.jpg");
-    _buzzardTex = LoadImage("Image/buzzard.jpg");
-	_beehiveTex = LoadImage("Image/beehive.jpeg");
-    _treeTex = LoadImage("Image/tree.jpg");
+	_birdTex = Application::LoadImage("Image/berd.jpg");
+	_bunnyTex = Application::LoadImage("Image/bunny.jpg");
+	_beeTex = Application::LoadImage("Image/bee.jpg");
+    _buzzardTex = Application::LoadImage("Image/buzzard.jpg");
+	_beehiveTex = Application::LoadImage("Image/beehive.jpeg");
+    _treeTex = Application::LoadImage("Image/tree.jpg");
 
     // Initialize Grid System
     float cellUniform = static_cast<float>(Application::GetWindowHeight())/30;
@@ -305,40 +305,6 @@ void SceneA1TakeTwo::MoveCamera(const Vector3& offset)
             UnpackVector(camera.up)
     );
     viewStack.LoadMatrix(_viewMatrix);
-}
-
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
-unsigned SceneA1TakeTwo::LoadImage(const char* filepath)
-{
-    int x,y,n;
-    unsigned char* pixel_data = stbi_load(filepath,&x,&y,&n,4);
-    if (!pixel_data)
-    {
-        std::cerr << "Failed To Load Image | " << filepath << std::endl;
-        std::cerr << stbi_failure_reason() << std::endl;
-        return 0;
-    }
-
-    GLuint textureID = 0;
-    glGenTextures(1,&textureID);
-    glBindTexture(GL_TEXTURE_2D,textureID);
-    glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,x,y,0,GL_RGBA,GL_UNSIGNED_BYTE,pixel_data);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR_MIPMAP_LINEAR);
-    float maxAnisotropy = 1.f;
-    glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnisotropy);
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, (GLint)maxAnisotropy );
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    glGenerateMipmap( GL_TEXTURE_2D );
-
-    stbi_image_free(pixel_data);
-
-    return textureID;
 }
 
 void SceneA1TakeTwo::KillAI(StateMachine* machine)

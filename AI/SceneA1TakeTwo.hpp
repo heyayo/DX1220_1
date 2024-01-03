@@ -46,7 +46,6 @@ class SceneA1TakeTwo : public SceneBase
     Entity* _presetTrees[4];
     Entity* _beeHive = nullptr;
 
-    unsigned LoadImage(const char* filepath);
     void MoveCamera(const Vector3& offset);
 	
 	static std::pair<double,double> MousePos();

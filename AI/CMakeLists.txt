@@ -20,6 +20,10 @@ add_executable(
         bulletboard.cpp bulletboard.hpp FSMs/beeai.cpp FSMs/beeai.hpp
         FSMs/buzzardai.cpp
         FSMs/buzzardai.hpp
+        SceneA2.cpp
+        maze.cpp
+        entitylite.cpp
+        entitylite.hpp
 )
 
 target_include_directories(AIEXEC PUBLIC ${CMAKE_SOURCE_DIR}/Common/)

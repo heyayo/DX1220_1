@@ -456,7 +456,7 @@ void Mtx44::SetToLookAt(double eyeX, double eyeY, double eyeZ,
 \param fovy
 	Field of view
 \param aspect
-	Aspect ratio = width : height
+	Aspect ratio = _width : _height
 \param zNear
 	Near plane
 \param zFar
