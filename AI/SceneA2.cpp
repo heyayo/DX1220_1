@@ -8,7 +8,8 @@
 #define UnpackVector(vec) vec.x,vec.y,vec.z
 #define PrintVector(vec) std::cout << vec.x << ',' << vec.y << ',' << vec.z << std::endl;
 
-unsigned TEST_TEXTURE;
+unsigned player_texture;
+unsigned grass_texture;
 
 void SceneA2::Init()
 {
@@ -20,9 +21,10 @@ void SceneA2::Init()
     float aspectRatio = (float)windowHeight/(float)windowWidth;
     // Initializing Projection Matrix
     Mtx44 projectionMatrix{};
+    const int cameraViewDistance = 25;
     projectionMatrix.SetToOrtho(
-            0,10,
-            0,10*aspectRatio,
+            0,cameraViewDistance,
+            0,cameraViewDistance*aspectRatio,
             -10,10
     );
     projectionStack.LoadIdentity();
@@ -42,9 +44,10 @@ void SceneA2::Init()
     viewStack.LoadMatrix(viewMatrix);
 
     _square = MeshBuilder::GenerateQuad("Square",{1,1,1}); // Generic Square Mesh
-    TEST_TEXTURE = Application::LoadImage("Image/berd.jpg");
+    player_texture = Application::LoadImage("Image/sword.png");
+    grass_texture = Application::LoadImage("Image/grass.png");
 
-    _maze.init(50,50, TEST_TEXTURE);
+    _maze.init(50,50, grass_texture);
     auto hits = _maze.raycast({5, 2}, {0, 0});
     for (auto x : hits.hits)
         std::cout << x.second.first << ' ' << x.second.second << std::endl;
@@ -52,12 +55,18 @@ void SceneA2::Init()
     hits = _maze.raycast({0,0},{5,2});
     for (auto x : hits.hits)
         std::cout << x.second.first << ' ' << x.second.second << std::endl;
+
+    _player = _maze.spawnEntity();
+    _player->texture = player_texture;
+    _player->modifier = SOLID;
+
+    std::cout << "PTR DIFF: " << &_maze[0] - &_maze[5] << std::endl;
 }
 
 void SceneA2::Update(double deltaTime)
 {
     // Debug Camera Movement
-    float camSpeed = static_cast<float>(deltaTime) * 100.f;
+    float camSpeed = static_cast<float>(deltaTime) * 40.f;
     if (Application::IsKeyPressed(GLFW_KEY_A))
         MoveCamera({-camSpeed,0,0});
     if (Application::IsKeyPressed(GLFW_KEY_D))
@@ -68,20 +77,22 @@ void SceneA2::Update(double deltaTime)
         MoveCamera({0,camSpeed,0});
 
     if (Application::IsKeyPressed(GLFW_KEY_LEFT))
-        --player->pos.first;
+        _maze.moveEntity(_player,{-1,0});
     if (Application::IsKeyPressed(GLFW_KEY_RIGHT))
-        ++player->pos.first;
+        _maze.moveEntity(_player,{1,0});
     if (Application::IsKeyPressed(GLFW_KEY_DOWN))
-        --player->pos.second;
+        _maze.moveEntity(_player,{0,-1});
     if (Application::IsKeyPressed(GLFW_KEY_UP))
-        ++player->pos.second;
+        _maze.moveEntity(_player,{0,1});
 }
 
 void SceneA2::Render()
 {
     SceneBase::Render();
 
+    glDisable(GL_DEPTH_TEST);
     RenderMaze();
+    RenderEntities();
 }
 
 void SceneA2::Exit()
@@ -101,6 +112,23 @@ void SceneA2::RenderMaze()
         _square->textureID = tile.texture;
         modelStack.PushMatrix();
         modelStack.Translate(pos.first,pos.second,0);
+        RenderMesh(_square,false);
+        modelStack.PopMatrix();
+        _square->textureID = 0;
+    }
+    modelStack.PopMatrix();
+}
+
+void SceneA2::RenderEntities()
+{
+    const auto& entities = _maze.getEntities();
+    modelStack.PushMatrix();
+    modelStack.Translate(0.5f,0.5f,0);
+    for (const auto ent : entities)
+    {
+        _square->textureID = ent->texture;
+        modelStack.PushMatrix();
+        modelStack.Translate(ent->pos.first,ent->pos.second,0);
         RenderMesh(_square,false);
         modelStack.PopMatrix();
         _square->textureID = 0;

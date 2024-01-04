@@ -56,7 +56,7 @@ GameObject* SceneTicTacToe::FetchGO()
 	return FetchGO();
 }
 
-//Exercise: This function should return 0 to 8, i.e. AI player's decision to put circle on one of the grids
+//Exercise: This function should return 0 to 8, i.e. AI _player's decision to put circle on one of the grids
 int SceneTicTacToe::GetAIDecision()
 {
 	return 0;

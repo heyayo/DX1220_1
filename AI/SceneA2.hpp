@@ -14,9 +14,11 @@ class SceneA2 : public SceneBase
     Mesh* _square;
     Maze _maze;
 
-    EntityLite* player;
+    EntityLite* _player;
+    EntityLite* _uniformWall;
 
     void RenderMaze();
+    void RenderEntities();
     void MoveCamera(const Vector3& offset);
 
 public:

@@ -5,8 +5,15 @@
 
 using vec2 = std::pair<int,int>;
 
+enum MODIFIERS
+{
+    SOLID,
+    PASSABLE
+};
+
 struct EntityLite
 {
+    MODIFIERS modifier;
     vec2 pos;
     unsigned texture;
 };

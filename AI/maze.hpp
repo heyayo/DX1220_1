@@ -17,6 +17,8 @@ struct RaycastHitInfo
 {
     typedef std::pair<MazeTile&,vec2> result;
     std::vector<result> hits;
+    MazeTile* firstHit = nullptr;
+    int firstHitIndex = 0;
 };
 
 class Maze
@@ -26,8 +28,10 @@ class Maze
     int _larger = 0;
 
     MazeTile* _mazeData = nullptr;
+    std::vector<EntityLite*> _entities;
 
     int FindNearestEmpty(int start);
+    float GetHeuristic(vec2 start, vec2 end);
 
     int up(int i) const;
     int down(int i) const;
@@ -41,6 +45,8 @@ public:
 
     void init(int w, int h, unsigned base_texture = 0);
 
+    constexpr const std::vector<EntityLite*>& getEntities()
+    { return _entities; }
     constexpr vec2 getSize() const
     { return {_width, _height}; }
     constexpr int getTileCount() const
@@ -53,18 +59,26 @@ public:
     }
     constexpr int coordToIndex(vec2 coord)
     { return static_cast<int>(coord.first) + (_width * static_cast<int>(coord.second)); }
+    constexpr int tileToIndex(const MazeTile& tile)
+    {
+        return &tile - _mazeData;
+    }
     constexpr const MazeTile& operator[](int index)
     { return _mazeData[index]; }
-    const EntityLite* spawnEntity(vec2 pos = {})
+    EntityLite* spawnEntity(vec2 pos = {})
     {
         auto* e = new EntityLite;
         e->pos = pos;
+        _entities.emplace_back(e);
         return e;
     }
     constexpr bool isTileEmpty(int index)
     { return _mazeData[index].entity != nullptr; }
 
     RaycastHitInfo raycast(vec2 origin, vec2 end);
+    bool pathfind(EntityLite* ent, vec2 end, std::vector<vec2>& output);
+
+    void moveEntity(EntityLite* ent, vec2 diff);
 };
 
 
