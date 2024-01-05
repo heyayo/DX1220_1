@@ -4,6 +4,8 @@
 #include "entitylite.hpp"
 
 #include <unordered_map>
+#include <vector>
+#include <cmath>
 
 using vec2 = std::pair<int,int>;
 
@@ -32,11 +34,16 @@ class Maze
 
     int FindNearestEmpty(int start);
     float GetHeuristic(vec2 start, vec2 end);
+    bool BoundsCheck(vec2 pos);
 
     int up(int i) const;
+    vec2 up(vec2 i) const;
     int down(int i) const;
+    vec2 down(vec2 i) const;
     int left(int i) const;
+    vec2 left(vec2 i) const;
     int right(int i) const;
+    vec2 right(vec2 i) const;
 
     std::vector<vec2> raycastLow(vec2 origin, vec2 end);
     std::vector<vec2> raycastHigh(vec2 origin, vec2 end);
@@ -79,6 +86,14 @@ public:
     bool pathfind(EntityLite* ent, vec2 end, std::vector<vec2>& output);
 
     void moveEntity(EntityLite* ent, vec2 diff);
+
+    static constexpr double length(vec2 vec)
+    {
+        return std::sqrt(
+                (vec.first) * (vec.first) +
+                (vec.second) * (vec.second)
+        );
+    }
 };
 
 

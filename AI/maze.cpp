@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <cmath>
 
 void Maze::init(int w, int h, unsigned int base_texture)
 {
@@ -104,6 +105,14 @@ int Maze::left(int i) const
 { return i - 1; }
 int Maze::right(int i) const
 { return i + 1; }
+vec2 Maze::up(vec2 i) const
+{ return {i.first,i.second+1}; }
+vec2 Maze::down(vec2 i) const
+{ return {i.first,i.second-1}; }
+vec2 Maze::left(vec2 i) const
+{ return {i.first-1,i.second}; }
+vec2 Maze::right(vec2 i) const
+{ return {i.first+1,i.second}; }
 
 RaycastHitInfo Maze::raycast(vec2 origin, vec2 end)
 {
@@ -257,77 +266,78 @@ void Maze::moveEntity(EntityLite* ent, vec2 diff)
     }
 }
 
-// Replace with your own later
+#include <set>
+#define NOMINMAX // Prevent windows.h min and max macros
+#include <limits>
+
+struct AStarCell
+{
+    vec2 prev {-1,-1};
+    float f {std::numeric_limits<float>::max()};
+    float g {std::numeric_limits<float>::max()};
+    float h {std::numeric_limits<float>::max()};
+};
+
+// Following https://www.geeksforgeeks.org/a-search-algorithm/
 bool Maze::pathfind(EntityLite* ent, vec2 end, std::vector<vec2>& output)
 {
-    output.clear();
-    const vec2 start = ent->pos;
-
-    //gScore stores the total walking distance from startNode to the current node in the search
-    std::vector<float> gScore(getTileCount(), FLT_MAX);
-    //fScore is defined as "actual distance from startNode to curr + "estimated distance from curr to endNode"
-    //i.e. fScore = gScore + Heuristic. every node has a score.
-    std::vector<float> fScore(getTileCount(), FLT_MAX);
-    //prev just stores where the agent came from before reaching this node in the search
-    std::vector<int> prev(getTileCount(), -1);
-
-    //stores nodes for exploring/searching
-    //NOTE: ideally, this should be implemented using a priorityqueue
-    // the reason is because in A*, the next node we want to explore is always the one with the smallest
-    // estimated cost, NOT necessarily the one that was pushed into the queue first
-    // (cost in this context is defined as the total distance it'll take to go from start pt to destination)
-    //For the ease of implementation, I'll just use an std::list at the (possible) cost of performance.
-    std::list<vec2> nodeQueue;
-    nodeQueue.push_back(start);
-    gScore[coordToIndex(start)] = 0; //the distance from start node to start node is ZERO
-    fScore[coordToIndex(start)] = GetHeuristic(start, end); //get a rough estimate of the distance it'll take to walk from startnode to endnode
-
-    //visit each node in the queue until we find a path to destination
-    while (!nodeQueue.empty())
+    auto DestCheck = [&](vec2 cell)
+    { return cell.first == end.first && cell.second == end.second; };
+    auto FillOutput = [&](const std::vector<AStarCell>& details)
     {
-        //get node with the lowest fscore from nodeQueue
-        //lowest fscore meant the node has a higher chance of being in the shortest path to destination
-        auto it =
-                std::min_element(nodeQueue.begin(), nodeQueue.end(), [&, fScore](vec2 lhs, vec2 rhs) {
-                    return fScore[coordToIndex(lhs)] < fScore[coordToIndex(rhs)];
-                });
-
-        vec2 curr = *it;
-
-        //check if path is found
-        if (curr == end)
+        vec2 node = end;
+        while (details[coordToIndex(node)].prev != node)
         {
-            //constructing our path backwards
-            while (curr != start)
-            {
-                //inserting at the front of a vector isn't efficient.
-                //but our path is short enough that we don't really need to care
-                output.insert(output.begin(), curr);
-                curr = indexToCoord(prev[coordToIndex(curr)]);
-            }
-            output.insert(output.begin(), ent->pos);
-            return true;
+            output.emplace_back(node);
+            node = details[coordToIndex(node)].prev;
         }
+        output.emplace_back(node);
+    };
+    auto CalculateH = [&](vec2 n)
+    {
+        return std::sqrt(
+                (n.first - end.first) * (n.first - end.first) +
+                        (n.second - end.second) * (n.second - end.second)
+                );
+    };
+    std::vector<bool> closed(getTileCount(),false);
+    std::vector<AStarCell> cellData(getTileCount());
 
-        //remove curr from 'queue'
-        nodeQueue.erase(it);
+    vec2 node = ent->pos;
+    auto& startingCell = cellData[coordToIndex(node)];
+    startingCell.f = 0.f;
+    startingCell.g = 0.f;
+    startingCell.h = 0.f;
+    startingCell.prev = node;
 
-        //go through every neighbouring nodes and add them to queue if they provide a better path(by comparing gscore)
-        for (Edge& edge : curr->edges)
+    std::set<std::pair<double,vec2>> open;
+    open.insert(std::make_pair(0.0, node));
+
+    while (!open.empty())
+    {
+        auto p = *open.begin();
+        open.erase(open.begin());
+
+        node = p.second;
+        closed[coordToIndex(node)] = true;
+
+        double f,g,h;
+
+        auto upNode = up(node);
+        if (BoundsCheck(upNode))
         {
-            Node* neighbour = edge.to;
-            //remember, the gscore is the walking distance from startnode to this neighbour
-            //we always priortize the lowest scoring edges to be part of the shortest path
-            float tempG = gScore[curr->id] + edge.cost; //+edge.cost because that's the distance from curr to neighbour
-            if (tempG < gScore[neighbour->id])
+            if (DestCheck(upNode))
             {
-                prev[neighbour->id] = curr->id; //record the path!
-                gScore[neighbour->id] = tempG;
-                fScore[neighbour->id] = tempG + GetHeuristic(neighbour, endNode);
-                //add neighbour into 'queue' if it's not already added
-                //we will eventually visit this node to explore its neighbours
-                if (std::find(nodeQueue.begin(), nodeQueue.end(), neighbour) == nodeQueue.end())
-                    nodeQueue.push_back(neighbour);
+                cellData[coordToIndex(upNode)].prev = node;
+                FillOutput(cellData);
+                return true;
+            }
+            if (!closed[coordToIndex(upNode)])
+            {
+                auto cell = cellData[coordToIndex(upNode)];
+                g = cell.g + 1.f;
+                h = CalculateH(upNode);
+                f = g+h;
             }
         }
     }
@@ -344,5 +354,11 @@ float Maze::GetHeuristic(vec2 start, vec2 end)
     auto aSQ = diff.first * diff.first;
     auto bSQ = diff.second * diff.second;
     auto cSQ = aSQ + bSQ;
-    return std::sqrtf(static_cast<float>(cSQ));
+    return std::sqrt(static_cast<float>(cSQ));
+}
+
+bool Maze::BoundsCheck(vec2 pos)
+{
+    // return true if within the bounds of the maze
+    return !(pos.first < 0 || pos.second < 0 || pos.first >= _width || pos.second >= _height);
 }
