@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <vector>
 #include <cmath>
+#include <string>
 
 using vec2 = std::pair<int,int>;
 
@@ -33,8 +34,10 @@ class Maze
     std::vector<EntityLite*> _entities;
 
     int FindNearestEmpty(int start);
-    float GetHeuristic(vec2 start, vec2 end);
-    bool BoundsCheck(vec2 pos);
+    float GetHeuristic(vec2 vec);
+    bool WithinBounds(vec2 pos);
+    bool V2E(vec2 a, vec2 b);
+    vec2 V2Minus(vec2 a, vec2 b);
 
     int up(int i) const;
     vec2 up(vec2 i) const;
@@ -51,6 +54,7 @@ class Maze
 public:
 
     void init(int w, int h, unsigned base_texture = 0);
+    void init(int w, int h, const std::string &csvFile, MazeTile* lookupTable);
 
     constexpr const std::vector<EntityLite*>& getEntities()
     { return _entities; }
@@ -87,7 +91,7 @@ public:
 
     void moveEntity(EntityLite* ent, vec2 diff);
 
-    static constexpr double length(vec2 vec)
+    static double length(vec2 vec)
     {
         return std::sqrt(
                 (vec.first) * (vec.first) +

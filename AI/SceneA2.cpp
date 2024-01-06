@@ -10,6 +10,7 @@
 
 unsigned player_texture;
 unsigned grass_texture;
+unsigned brick_texture;
 
 void SceneA2::Init()
 {
@@ -46,8 +47,13 @@ void SceneA2::Init()
     _square = MeshBuilder::GenerateQuad("Square",{1,1,1}); // Generic Square Mesh
     player_texture = Application::LoadImage("Image/sword.png");
     grass_texture = Application::LoadImage("Image/grass.png");
+    brick_texture = Application::LoadImage("Image/bricks.png");
 
-    _maze.init(50,50, grass_texture);
+    //_maze.init(50,50, grass_texture);
+    MazeTile lookup[] = {
+            MazeTile{nullptr,grass_texture},
+            MazeTile{nullptr,brick_texture}};
+    _maze.init(20,30,"map.csv",lookup);
     auto hits = _maze.raycast({5, 2}, {0, 0});
     for (auto x : hits.hits)
         std::cout << x.second.first << ' ' << x.second.second << std::endl;
