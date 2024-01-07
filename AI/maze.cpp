@@ -33,7 +33,7 @@ void Maze::init(int w, int h, const std::string &csvFile, MazeTile* lookupTable)
         auto close = mapFile.GetColumn<int>(i);
         for (int j = 0; j < _height; ++j)
         {
-            _mazeData[coordToIndex({i,j})] = lookupTable[close[j]];
+            _mazeData[coordToIndex({i,j})] = lookupTable[close[_height - j - 1]];
         }
     }
 }
@@ -134,7 +134,7 @@ vec2 Maze::left(vec2 i) const
 vec2 Maze::right(vec2 i) const
 { return {i.first+1,i.second}; }
 
-RaycastHitInfo Maze::raycast(vec2 origin, vec2 end)
+RaycastHitInfo Maze::raycast(vec2 origin, vec2 end, EntityLite *ignore)
 {
     std::vector<vec2> tiles;
     if (abs(end.second - origin.second) < abs(end.first - origin.first))
@@ -177,11 +177,8 @@ RaycastHitInfo Maze::raycast(vec2 origin, vec2 end)
                     tile,
                     x
                 );
-        if (tile.entity)
-        {
-            if (tile.entity->modifier == SOLID)
-                info.firstHit = &tile;
-        }
+        if (tile.entity && tile.entity != ignore)
+            info.firstHit = &tile;
     }
 
     return info;
@@ -252,38 +249,51 @@ std::vector<vec2> Maze::raycastHigh(vec2 origin, vec2 end)
 
 void Maze::moveEntity(EntityLite* ent, vec2 diff)
 {
-    int index = coordToIndex(ent->pos);
-    auto entTile = _mazeData[index];
-    vec2 endPos = ent->pos;
+    // Get Entity
+    MazeTile* entTile = _entityLocations[ent];
+    vec2 entityPosition = indexToCoord(tileToIndex(entTile));
+    vec2 endPos = entityPosition;
     endPos.first += diff.first;
     endPos.second += diff.second;
-    auto rayinfo = raycast(ent->pos, endPos);
+    auto rayinfo = raycast(entityPosition, endPos, nullptr);
 
     if (rayinfo.hits.empty())
         return;
     if (rayinfo.firstHit) // Check if the raycast hit something
     {
-        if (rayinfo.firstHitIndex > 0) // Check if the first hit is not next to the entity
+        if (rayinfo.firstHit->entity != ent)
         {
-            ent->pos = rayinfo.hits[rayinfo.firstHitIndex-1].second;
-            int nextIndex = coordToIndex(ent->pos);
-            auto nextTile = _mazeData[nextIndex];
+            if (rayinfo.firstHitIndex > 0) // Check if the first hit is not next to the entity
+            {
+                entityPosition = rayinfo.hits[rayinfo.firstHitIndex-1].second;
+                int nextIndex = coordToIndex(entityPosition);
+                auto& nextTile = _mazeData[nextIndex];
 
-            // Swap Tile Entities;
-            entTile.entity = nullptr;
-            nextTile.entity = ent;
+                if (nextTile.entity)
+                    if (nextTile.entity->modifier != PUSHABLE)
+                        return;
+
+                // Swap Tile Entities;
+                entTile->entity = nextTile.entity;
+                nextTile.entity = ent;
+                _entityLocations[ent] = &nextTile;
+                return;
+            }
         }
     }
-    else
-    {
-        ent->pos = (rayinfo.hits.end()-1)->second;
-        int nextIndex = coordToIndex(ent->pos);
-        auto nextTile = _mazeData[nextIndex];
 
-        // Swap Tile Entities;
-        entTile.entity = nullptr;
-        nextTile.entity = ent;
-    }
+    entityPosition = (rayinfo.hits.end()-1)->second;
+    int nextIndex = coordToIndex(entityPosition);
+    auto& nextTile = _mazeData[nextIndex];
+
+    if (nextTile.entity)
+        if (nextTile.entity->modifier != PUSHABLE)
+            return;
+
+    // Swap Tile Entities;
+    entTile->entity = nextTile.entity;
+    nextTile.entity = ent;
+    _entityLocations[ent] = &nextTile;
 }
 
 #include <set>
@@ -314,7 +324,9 @@ bool Maze::pathfind(EntityLite* ent, vec2 end, std::vector<vec2>& output)
     std::vector<bool> closed(getTileCount(),false);
     std::vector<AStarCell> cellData(getTileCount());
 
-    vec2 node = ent->pos;
+    vec2 entityPosition = indexToCoord(tileToIndex(_entityLocations[ent]));
+
+    vec2 node = entityPosition;
     auto& startingCell = cellData[coordToIndex(node)];
     startingCell.f = 0.f;
     startingCell.g = 0.f;
@@ -352,7 +364,6 @@ bool Maze::pathfind(EntityLite* ent, vec2 end, std::vector<vec2>& output)
                 if (!closed[coordToIndex(nextNode)])
                 {
                     if (_mazeData[coordToIndex(nextNode)].entity == nullptr) continue;
-                    if (_mazeData[coordToIndex(nextNode)].entity->modifier == SOLID) continue;
 
                     auto cell = cellData[coordToIndex(nextNode)];
                     g = cell.g + 1.f;

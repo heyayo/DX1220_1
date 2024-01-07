@@ -7,14 +7,13 @@ using vec2 = std::pair<int,int>;
 
 enum MODIFIERS
 {
-    SOLID,
-    PASSABLE
+    NOMOD,
+    PUSHABLE
 };
 
 struct EntityLite
 {
-    MODIFIERS modifier;
-    vec2 pos;
+    MODIFIERS modifier {NOMOD};
     unsigned texture;
 };
 

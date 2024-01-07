@@ -16,10 +16,15 @@ class SceneA2 : public SceneBase
 
     EntityLite* _player;
     EntityLite* _uniformWall;
+    EntityLite _brickWall;
 
     void RenderMaze();
     void RenderEntities();
     void MoveCamera(const Vector3& offset);
+
+    vec2 GetMousePosition();
+
+    void DEBUG_Raycast();
 
 public:
     virtual void Init() override;

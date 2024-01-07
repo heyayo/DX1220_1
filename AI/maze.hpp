@@ -32,6 +32,7 @@ class Maze
 
     MazeTile* _mazeData = nullptr;
     std::vector<EntityLite*> _entities;
+    std::unordered_map<EntityLite*,MazeTile*> _entityLocations;
 
     int FindNearestEmpty(int start);
     float GetHeuristic(vec2 vec);
@@ -71,22 +72,28 @@ public:
     constexpr int coordToIndex(vec2 coord)
     { return static_cast<int>(coord.first) + (_width * static_cast<int>(coord.second)); }
     constexpr int tileToIndex(const MazeTile& tile)
-    {
-        return &tile - _mazeData;
-    }
+    { return &tile - _mazeData; }
+    constexpr int tileToIndex(MazeTile* tile)
+    { return tile - _mazeData; }
+    constexpr vec2 getEntityPosition(EntityLite* ent)
+    { return indexToCoord(tileToIndex(_entityLocations[ent])); }
     constexpr const MazeTile& operator[](int index)
     { return _mazeData[index]; }
     EntityLite* spawnEntity(vec2 pos = {})
     {
         auto* e = new EntityLite;
-        e->pos = pos;
         _entities.emplace_back(e);
+        auto& tile = _mazeData[coordToIndex(pos)];
+        tile.entity = e;
+        _entityLocations.insert({e, &tile});
         return e;
     }
+    MazeTile* findEntityTile(EntityLite* ent)
+    { return _entityLocations[ent]; }
     constexpr bool isTileEmpty(int index)
     { return _mazeData[index].entity != nullptr; }
 
-    RaycastHitInfo raycast(vec2 origin, vec2 end);
+    RaycastHitInfo raycast(vec2 origin, vec2 end, EntityLite *ignore);
     bool pathfind(EntityLite* ent, vec2 end, std::vector<vec2>& output);
 
     void moveEntity(EntityLite* ent, vec2 diff);
