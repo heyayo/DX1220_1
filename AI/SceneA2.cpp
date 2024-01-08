@@ -99,8 +99,12 @@ void SceneA2::Update(double deltaTime)
     if (Application::IsKeyPressed(GLFW_KEY_UP))
         _maze.moveEntity(_player,{0,1});
 
-    if (Application::IsMouseJustPressed(1))
-        DEBUG_Pathfind();
+    static bool spaceCheck = false;
+    if (Application::IsKeyPressed(GLFW_KEY_SPACE) && !spaceCheck)
+    {
+        _maze.print_map();
+    }
+    spaceCheck = Application::IsKeyPressed(GLFW_KEY_SPACE);
 }
 
 void SceneA2::Render()
@@ -110,6 +114,7 @@ void SceneA2::Render()
     glDisable(GL_DEPTH_TEST);
     RenderMaze();
     DEBUG_Raycast();
+    DEBUG_Pathfind();
     //RenderEntities();
 }
 
@@ -216,17 +221,27 @@ void SceneA2::DEBUG_Pathfind()
 {
     static std::vector<vec2> course{};
 
-    auto mousePos = GetMousePosition();
-    bool result = _maze.pathfind(_player,mousePos,course);
-    if (result) LOGINFO("Path found");
-    else LOGINFO("Path blocked");
-
-    for (auto vec : course)
+    if (Application::IsMouseJustPressed(1))
     {
-        auto tile = _maze[_maze.coordToIndex(vec)];
-
-        tile.texture = 0;
+        auto mousePos = GetMousePosition();
+        LOGINFO(mousePos.first << '|' << mousePos.second);
+        course.clear();
+        bool result = _maze.pathfind(_player,mousePos,course);
+        if (result) LOGINFO("Path found");
+        else LOGINFO("Path blocked");
     }
+
+    modelStack.PushMatrix();
+    modelStack.Translate(0.5f,0.5f,0);
+    for (auto x : course)
+    {
+        _square->textureID = 0;
+        modelStack.PushMatrix();
+        modelStack.Translate(x.first,x.second,0);
+        RenderMesh(_square,false);
+        modelStack.PopMatrix();
+    }
+    modelStack.PopMatrix();
 }
 
 vec2 SceneA2::GetMousePosition()

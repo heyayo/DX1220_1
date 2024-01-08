@@ -369,7 +369,8 @@ bool Maze::pathfind(EntityLite* ent, vec2 end, std::vector<vec2>& output)
                 }
                 if (!closed[coordToIndex(nextNode)])
                 {
-                    if (_mazeData[coordToIndex(nextNode)].entity == nullptr) continue;
+                    if (_mazeData[coordToIndex(nextNode)].entity)
+                    if (_mazeData[coordToIndex(nextNode)].entity->modifier != PUSHABLE) continue;
 
                     auto cell = cellData[coordToIndex(nextNode)];
                     g = cell.g + 1.f;
@@ -419,7 +420,13 @@ void Maze::print_map()
     {
         for (int j = 0; j < _height; ++j)
         {
-            std::cout <<
+            const auto& e = _mazeData[coordToIndex({i,j})];
+            int no = 0;
+            if (e.entity)
+                no = e.texture;
+            std::cout << no << '|';
         }
+        std::cout << std::endl;
     }
+    std::cout << std::endl;
 }
