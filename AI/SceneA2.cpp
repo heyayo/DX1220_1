@@ -6,11 +6,14 @@
 #include "GLFW/glfw3.h"
 
 #define UnpackVector(vec) vec.x,vec.y,vec.z
-#define PrintVector(vec) std::cout << vec.x << ',' << vec.y << ',' << vec.z << std::endl;
+#define PrintVector(vec) vec.x << ',' << vec.y << ',' << vec.z
+#define LOGINFO(msg) std::cout << "[INFO]\t" << msg << std::endl
 
 unsigned player_texture;
 unsigned grass_texture;
 unsigned brick_texture;
+
+Mesh* _red;
 
 void SceneA2::Init()
 {
@@ -19,10 +22,12 @@ void SceneA2::Init()
     windowWidth = Application::GetWindowWidth();
     windowHeight = Application::GetWindowHeight();
 
-    float aspectRatio = (float)windowHeight/(float)windowWidth;
+    LOGINFO(windowWidth);
+    LOGINFO(windowHeight);
+
+    aspectRatio = (float)windowHeight/(float)windowWidth;
     // Initializing Projection Matrix
     Mtx44 projectionMatrix{};
-    const int cameraViewDistance = 25;
     projectionMatrix.SetToOrtho(
             0,cameraViewDistance,
             0,cameraViewDistance*aspectRatio,
@@ -45,6 +50,7 @@ void SceneA2::Init()
     viewStack.LoadMatrix(viewMatrix);
 
     _square = MeshBuilder::GenerateQuad("Square",{1,1,1}); // Generic Square Mesh
+    _red = MeshBuilder::GenerateQuad("Square",{1,0,0}); // Generic Square Mesh
     player_texture = Application::LoadImage("Image/sword.png");
     grass_texture = Application::LoadImage("Image/grass.png");
     brick_texture = Application::LoadImage("Image/bricks.png");
@@ -67,6 +73,8 @@ void SceneA2::Init()
     _player->texture = player_texture;
 
     std::cout << "PTR DIFF: " << &_maze[0] - &_maze[5] << std::endl;
+
+    LOGINFO(PrintVector(camera.position));
 }
 
 void SceneA2::Update(double deltaTime)
@@ -91,8 +99,8 @@ void SceneA2::Update(double deltaTime)
     if (Application::IsKeyPressed(GLFW_KEY_UP))
         _maze.moveEntity(_player,{0,1});
 
-    if (Application::IsMouseJustPressed(0))
-        DEBUG_Raycast();
+    if (Application::IsMouseJustPressed(1))
+        DEBUG_Pathfind();
 }
 
 void SceneA2::Render()
@@ -101,6 +109,7 @@ void SceneA2::Render()
 
     glDisable(GL_DEPTH_TEST);
     RenderMaze();
+    DEBUG_Raycast();
     //RenderEntities();
 }
 
@@ -170,23 +179,68 @@ void SceneA2::MoveCamera(const Vector3& offset)
 void SceneA2::DEBUG_Raycast()
 {
     static std::vector<std::pair<MazeTile&,vec2>> course;
+    static RaycastHitInfo rayInfo;
 
-    if (!course.empty())
-        for (auto& tile : course)
-            tile.first.texture = grass_texture;
+    if (Application::IsMouseJustPressed(0))
+    {
+        auto mousePos = GetMousePosition();
+        LOGINFO(mousePos.first << '|' << mousePos.second);
+        rayInfo = _maze.raycast(_maze.getEntityPosition(_player), mousePos, _player);
+        course = rayInfo.hits;
+        for (auto x : course)
+            LOGINFO("Raycast Path: " << x.second.first << '|' << x.second.second);
+        if (rayInfo.firstHit)
+            LOGINFO("First Hit: " << course[rayInfo.firstHitIndex].second.first << '|' << course[rayInfo.firstHitIndex].second.second);
+        else LOGINFO("No First Hit");
+    }
+
+    modelStack.PushMatrix();
+    modelStack.Translate(0.5f,0.5f,0);
+    for (auto x : course)
+    {
+        _square->textureID = 0;
+        modelStack.PushMatrix();
+        modelStack.Translate(x.second.first,x.second.second,0);
+        RenderMesh(_square,false);
+        modelStack.PopMatrix();
+    }
+    modelStack.PushMatrix();
+    auto pos = rayInfo.firstHit ? course[rayInfo.firstHitIndex].second : vec2{};
+    modelStack.Translate(pos.first,pos.second,0);
+    RenderMesh(_red,false);
+    modelStack.PopMatrix();
+    modelStack.PopMatrix();
+}
+
+void SceneA2::DEBUG_Pathfind()
+{
+    static std::vector<vec2> course{};
 
     auto mousePos = GetMousePosition();
-    auto rayInfo = _maze.raycast(_maze.getEntityPosition(_player), mousePos, nullptr);
-    course = rayInfo.hits;
-    for (auto& tile : course)
-        tile.first.texture = 0;
+    bool result = _maze.pathfind(_player,mousePos,course);
+    if (result) LOGINFO("Path found");
+    else LOGINFO("Path blocked");
+
+    for (auto vec : course)
+    {
+        auto tile = _maze[_maze.coordToIndex(vec)];
+
+        tile.texture = 0;
+    }
 }
 
 vec2 SceneA2::GetMousePosition()
 {
+    static double x_tile_scale = Application::GetWindowWidth() / cameraViewDistance;
+    static double y_tile_scale = Application::GetWindowHeight() / (cameraViewDistance*aspectRatio);
+
     double x{},y{};
     Application::GetCursorPos(&x,&y);
+    y = windowHeight - y;
+
+    x /= x_tile_scale;
     x += camera.position.x;
+    y /= x_tile_scale;
     y += camera.position.y;
     return {x,y};
 }

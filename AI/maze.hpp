@@ -105,6 +105,8 @@ public:
                 (vec.second) * (vec.second)
         );
     }
+
+    void print_map();
 };
 
 

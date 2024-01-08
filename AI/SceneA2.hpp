@@ -10,6 +10,8 @@ class SceneA2 : public SceneBase
 {
     int windowWidth;
     int windowHeight;
+    const int cameraViewDistance = 25;
+    float aspectRatio;
 
     Mesh* _square;
     Maze _maze;
@@ -25,6 +27,7 @@ class SceneA2 : public SceneBase
     vec2 GetMousePosition();
 
     void DEBUG_Raycast();
+    void DEBUG_Pathfind();
 
 public:
     virtual void Init() override;

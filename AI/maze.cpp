@@ -168,8 +168,10 @@ RaycastHitInfo Maze::raycast(vec2 origin, vec2 end, EntityLite *ignore)
     RaycastHitInfo info;
     if (tiles.empty())
         return info;
-    for (const auto x : tiles)
+    bool firstHitHit = false;
+    for (int i = 0; i < tiles.size(); ++i)
     {
+        const auto& x = tiles[i];
         if (x.first < 0 || x.second < 0) continue;
         if (x.first >= _width || x.second >= _height) continue;
         auto& tile = _mazeData[coordToIndex(x)];
@@ -177,8 +179,12 @@ RaycastHitInfo Maze::raycast(vec2 origin, vec2 end, EntityLite *ignore)
                     tile,
                     x
                 );
-        if (tile.entity && tile.entity != ignore)
+        if (tile.entity && tile.entity != ignore && !firstHitHit)
+        {
+            firstHitHit = true;
             info.firstHit = &tile;
+            info.firstHitIndex = i;
+        }
     }
 
     return info;
@@ -255,7 +261,7 @@ void Maze::moveEntity(EntityLite* ent, vec2 diff)
     vec2 endPos = entityPosition;
     endPos.first += diff.first;
     endPos.second += diff.second;
-    auto rayinfo = raycast(entityPosition, endPos, nullptr);
+    auto rayinfo = raycast(entityPosition, endPos, ent);
 
     if (rayinfo.hits.empty())
         return;
@@ -406,3 +412,14 @@ bool Maze::V2E(vec2 a, vec2 b)
 { return a.first == b.first && a.second == b.second; }
 vec2 Maze::V2Minus(vec2 a, vec2 b)
 { return {b.first - a.first, b.second - a.second}; }
+
+void Maze::print_map()
+{
+    for (int i = 0; i < _width; ++i)
+    {
+        for (int j = 0; j < _height; ++j)
+        {
+            std::cout <<
+        }
+    }
+}
