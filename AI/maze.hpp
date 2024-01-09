@@ -97,6 +97,7 @@ public:
     bool pathfind(EntityLite* ent, vec2 end, std::vector<vec2>& output);
 
     void moveEntity(EntityLite* ent, vec2 diff);
+    void teleportEntity(EntityLite* ent, vec2 end);
 
     static double length(vec2 vec)
     {

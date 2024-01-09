@@ -112,7 +112,7 @@ void SceneA2::Render()
     SceneBase::Render();
 
     glDisable(GL_DEPTH_TEST);
-    RenderMazeWithFog();
+    RenderMaze();
     //DEBUG_Raycast();
     DEBUG_Pathfind();
     //RenderEntities();
@@ -268,8 +268,9 @@ void SceneA2::DEBUG_Raycast()
 void SceneA2::DEBUG_Pathfind()
 {
     static std::vector<vec2> course{};
+    static float timer = 0.f;
 
-    if (Application::IsMouseJustPressed(1))
+    if (Application::IsMouseJustPressed(0))
     {
         auto mousePos = GetMousePosition();
         LOGINFO(mousePos.first << '|' << mousePos.second);
@@ -282,17 +283,25 @@ void SceneA2::DEBUG_Pathfind()
             LOGINFO(a.first << '.' << a.second);
     }
 
-    modelStack.PushMatrix();
-    modelStack.Translate(0.5f,0.5f,0);
-    for (auto x : course)
+    timer += Application::DELTATIME;
+    if (timer > 0.5f && !course.empty())
     {
-        _square->textureID = 0;
-        modelStack.PushMatrix();
-        modelStack.Translate(x.first,x.second,0);
-        RenderMesh(_square,false);
-        modelStack.PopMatrix();
+        timer = 0.f;
+        _maze.teleportEntity(_player,*(course.end()-1));
+        course.erase(course.end());
     }
-    modelStack.PopMatrix();
+
+//    modelStack.PushMatrix();
+//    modelStack.Translate(0.5f,0.5f,0);
+//    for (auto x : course)
+//    {
+//        _square->textureID = 0;
+//        modelStack.PushMatrix();
+//        modelStack.Translate(x.first,x.second,0);
+//        RenderMesh(_square,false);
+//        modelStack.PopMatrix();
+//    }
+//    modelStack.PopMatrix();
 }
 
 vec2 SceneA2::GetMousePosition()

@@ -302,6 +302,19 @@ void Maze::moveEntity(EntityLite* ent, vec2 diff)
     _entityLocations[ent] = &nextTile;
 }
 
+void Maze::teleportEntity(EntityLite *ent, vec2 end)
+{
+    // Get Entity Tiles
+    MazeTile* entTile = _entityLocations[ent];
+    int nextIndex = coordToIndex(end);
+    auto& nextTile = _mazeData[nextIndex];
+
+    // Swap Tile Entities
+    entTile->entity = nextTile.entity;
+    nextTile.entity = ent;
+    _entityLocations[ent] = &nextTile;
+}
+
 #include <set>
 #define NOMINMAX // Prevent windows.h min and max macros
 #include <limits>
