@@ -314,19 +314,11 @@ struct AStarCell
     float h {std::numeric_limits<float>::max()};
 };
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnreachableCode"
 // Following https://www.geeksforgeeks.org/a-search-algorithm/
 bool Maze::pathfind(EntityLite* ent, vec2 end, std::vector<vec2>& output)
 {
-    auto FillOutput = [&](const std::vector<AStarCell>& details)
-    {
-        vec2 node = end;
-        while (details[coordToIndex(node)].prev != node)
-        {
-            output.emplace_back(node);
-            node = details[coordToIndex(node)].prev;
-        }
-        output.emplace_back(node);
-    };
     std::vector<bool> closed(getTileCount(),false);
     std::vector<AStarCell> cellData(getTileCount());
 
@@ -361,10 +353,18 @@ bool Maze::pathfind(EntityLite* ent, vec2 end, std::vector<vec2>& output)
         {
             if (WithinBounds(nextNode))
             {
+                if (_mazeData[coordToIndex(nextNode)].entity)
+                    if (_mazeData[coordToIndex(nextNode)].entity->modifier != PUSHABLE) continue;
                 if (V2E(nextNode, end))
                 {
                     cellData[coordToIndex(nextNode)].prev = node;
-                    FillOutput(cellData);
+                    vec2 a = end;
+                    while (cellData[coordToIndex(a)].prev != a)
+                    {
+                        output.emplace_back(a);
+                        a = cellData[coordToIndex(a)].prev;
+                    }
+                    output.emplace_back(a);
                     return true;
                 }
                 if (!closed[coordToIndex(nextNode)])
@@ -372,7 +372,7 @@ bool Maze::pathfind(EntityLite* ent, vec2 end, std::vector<vec2>& output)
                     if (_mazeData[coordToIndex(nextNode)].entity)
                     if (_mazeData[coordToIndex(nextNode)].entity->modifier != PUSHABLE) continue;
 
-                    auto cell = cellData[coordToIndex(nextNode)];
+                    auto& cell = cellData[coordToIndex(nextNode)];
                     g = cell.g + 1.f;
                     h = GetHeuristic(V2Minus(nextNode, end));
                     f = g+h;
@@ -394,6 +394,7 @@ bool Maze::pathfind(EntityLite* ent, vec2 end, std::vector<vec2>& output)
 
     return false;
 }
+#pragma clang diagnostic pop
 
 float Maze::GetHeuristic(vec2 vec)
 {
@@ -406,7 +407,7 @@ float Maze::GetHeuristic(vec2 vec)
 bool Maze::WithinBounds(vec2 pos)
 {
     // return true if within the bounds of the maze
-    return !(pos.first < 0 || pos.second < 0 || pos.first >= _width || pos.second >= _height);
+    return !(pos.first < 0 || pos.second < 0 || pos.first > _width || pos.second > _height);
 }
 
 bool Maze::V2E(vec2 a, vec2 b)

@@ -113,7 +113,7 @@ void SceneA2::Render()
 
     glDisable(GL_DEPTH_TEST);
     RenderMaze();
-    DEBUG_Raycast();
+    //DEBUG_Raycast();
     DEBUG_Pathfind();
     //RenderEntities();
 }
@@ -229,6 +229,9 @@ void SceneA2::DEBUG_Pathfind()
         bool result = _maze.pathfind(_player,mousePos,course);
         if (result) LOGINFO("Path found");
         else LOGINFO("Path blocked");
+
+        for (const auto& a : course)
+            LOGINFO(a.first << '.' << a.second);
     }
 
     modelStack.PushMatrix();
