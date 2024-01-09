@@ -21,6 +21,7 @@ class SceneA2 : public SceneBase
     EntityLite _brickWall;
 
     void RenderMaze();
+    void RenderMazeWithFog();
     void RenderEntities();
     void MoveCamera(const Vector3& offset);
 

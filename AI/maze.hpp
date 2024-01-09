@@ -36,10 +36,15 @@ class Maze
 
     int FindNearestEmpty(int start);
     float GetHeuristic(vec2 vec);
-    bool WithinBounds(vec2 pos);
     bool V2E(vec2 a, vec2 b);
     vec2 V2Minus(vec2 a, vec2 b);
 
+    std::vector<vec2> raycastLow(vec2 origin, vec2 end);
+    std::vector<vec2> raycastHigh(vec2 origin, vec2 end);
+
+public:
+
+    bool withinBounds(vec2 pos);
     int up(int i) const;
     vec2 up(vec2 i) const;
     int down(int i) const;
@@ -48,11 +53,6 @@ class Maze
     vec2 left(vec2 i) const;
     int right(int i) const;
     vec2 right(vec2 i) const;
-
-    std::vector<vec2> raycastLow(vec2 origin, vec2 end);
-    std::vector<vec2> raycastHigh(vec2 origin, vec2 end);
-
-public:
 
     void init(int w, int h, unsigned base_texture = 0);
     void init(int w, int h, const std::string &csvFile, MazeTile* lookupTable);

@@ -351,7 +351,7 @@ bool Maze::pathfind(EntityLite* ent, vec2 end, std::vector<vec2>& output)
         vec2 nodes[] = {upNode,leftNode,rightNode,downNode};
         for (auto& nextNode : nodes)
         {
-            if (WithinBounds(nextNode))
+            if (withinBounds(nextNode))
             {
                 if (_mazeData[coordToIndex(nextNode)].entity)
                     if (_mazeData[coordToIndex(nextNode)].entity->modifier != PUSHABLE) continue;
@@ -404,10 +404,10 @@ float Maze::GetHeuristic(vec2 vec)
     return std::sqrt(static_cast<float>(cSQ));
 }
 
-bool Maze::WithinBounds(vec2 pos)
+bool Maze::withinBounds(vec2 pos)
 {
     // return true if within the bounds of the maze
-    return !(pos.first < 0 || pos.second < 0 || pos.first > _width || pos.second > _height);
+    return !(pos.first < 0 || pos.second < 0 || pos.first >= _width || pos.second >= _height);
 }
 
 bool Maze::V2E(vec2 a, vec2 b)

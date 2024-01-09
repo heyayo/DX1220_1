@@ -112,7 +112,7 @@ void SceneA2::Render()
     SceneBase::Render();
 
     glDisable(GL_DEPTH_TEST);
-    RenderMaze();
+    RenderMazeWithFog();
     //DEBUG_Raycast();
     DEBUG_Pathfind();
     //RenderEntities();
@@ -143,6 +143,54 @@ void SceneA2::RenderMaze()
         }
         modelStack.PopMatrix();
         _square->textureID = 0;
+    }
+    modelStack.PopMatrix();
+}
+
+void SceneA2::RenderMazeWithFog()
+{
+    const int radius = 3;
+    modelStack.PushMatrix();
+    modelStack.Translate(0.5f,0.5f,0);
+    //int start = _maze.coordToIndex(_maze.getEntityPosition(_player));
+    vec2 start = _maze.getEntityPosition(_player);
+    for (int i = 0; i < radius; ++i)
+    {
+        start = _maze.left(start);
+    }
+    for (int j = 0; j < radius; ++j)
+    {
+        start = _maze.up(start);
+    }
+    for (int i = 0; i < radius*2+1; ++i)
+    {
+        //int col = start;
+        vec2 col = start;
+        for (int j = 0; j < radius*2+1; ++j)
+        {
+            //auto pos = _maze.indexToCoord(col);
+            auto pos = col;
+            if (!_maze.withinBounds(pos))
+            {
+                col = _maze.down(col);
+                continue;
+            }
+            auto tile = _maze[_maze.coordToIndex(pos)];
+            //auto tile = _maze[col];
+            _square->textureID = tile.texture;
+            modelStack.PushMatrix();
+            modelStack.Translate(pos.first,pos.second,0);
+            RenderMesh(_square,false);
+            if (tile.entity)
+            {
+                _square->textureID = tile.entity->texture;
+                RenderMesh(_square,false);
+            }
+            modelStack.PopMatrix();
+            _square->textureID = 0;
+            col = _maze.down(col);
+        }
+        start = _maze.right(start);
     }
     modelStack.PopMatrix();
 }
