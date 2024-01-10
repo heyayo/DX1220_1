@@ -3,6 +3,7 @@
 
 #include "SceneBase.h"
 #include "maze.hpp"
+#include "turnmeter.hpp"
 
 #include "GLFW/glfw3.h"
 
@@ -15,9 +16,12 @@ class SceneA2 : public SceneBase
 
     Mesh* _square;
     Maze _maze;
+    TurnMeter _turnmeter{_maze};
 
     EntityLite* _player;
     EntityLite _brickWall;
+
+    bool _playerTurn = true;
 
     void RenderMaze();
     void RenderMazeWithFog();

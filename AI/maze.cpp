@@ -347,6 +347,8 @@ bool Maze::pathfind(EntityLite* ent, vec2 end, std::vector<vec2>& output)
     std::set<std::pair<double,vec2>> open;
     open.insert(std::make_pair(0.0, node));
 
+    vec2 lastgood = {};
+
     while (!open.empty())
     {
         auto p = *open.begin();
@@ -399,19 +401,13 @@ bool Maze::pathfind(EntityLite* ent, vec2 end, std::vector<vec2>& output)
                         cell.g = g;
                         cell.h = h;
                         cell.prev = node;
+
+                        lastgood = nextNode;
                     }
                 }
             }
         }
     }
-
-    vec2 a = node;
-    while (cellData[coordToIndex(a)].prev != a)
-    {
-        output.emplace_back(a);
-        a = cellData[coordToIndex(a)].prev;
-    }
-    output.emplace_back(a);
 
     return false;
 }

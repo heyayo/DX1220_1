@@ -71,6 +71,7 @@ void SceneA2::Init()
 
     _player = _maze.spawnEntity();
     _player->texture = player_texture;
+    _player->modifier = PUSHABLE;
 
     std::cout << "PTR DIFF: " << &_maze[0] - &_maze[5] << std::endl;
 
@@ -99,12 +100,10 @@ void SceneA2::Update(double deltaTime)
     if (Application::IsKeyPressed(GLFW_KEY_UP))
         _maze.moveEntity(_player,{0,1});
 
-    static bool spaceCheck = false;
-    if (Application::IsKeyPressed(GLFW_KEY_SPACE) && !spaceCheck)
+    if (!_playerTurn)
     {
-        _maze.print_map();
+        _turnmeter.doTurn();
     }
-    spaceCheck = Application::IsKeyPressed(GLFW_KEY_SPACE);
 }
 
 void SceneA2::Render()
@@ -288,7 +287,7 @@ void SceneA2::DEBUG_Pathfind()
     {
         timer = 0.f;
         _maze.teleportEntity(_player,*(course.end()-1));
-        course.erase(course.end());
+        course.erase(course.end()-1);
     }
 
 //    modelStack.PushMatrix();

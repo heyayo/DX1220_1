@@ -13,14 +13,14 @@ struct TurnAction
     std::optional<vec2> destination;
     float speed{};
     EntityLite* target = nullptr;
-    float damage{};
 };
 
 struct Actor
 {
     EntityLite* owner;
-    StateMachine* sm;
     std::optional<TurnAction> action;
+
+    virtual void think() = 0;
 };
 
 class TurnMeter
@@ -39,7 +39,7 @@ public:
 
     TurnMeter(Maze& maze);
 
-    void doTurn(); // Call in Update()
+    bool doTurn(); // Call in Update()
 };
 
 #endif
