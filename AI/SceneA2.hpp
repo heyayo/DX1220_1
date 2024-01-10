@@ -17,7 +17,6 @@ class SceneA2 : public SceneBase
     Maze _maze;
 
     EntityLite* _player;
-    EntityLite* _uniformWall;
     EntityLite _brickWall;
 
     void RenderMaze();

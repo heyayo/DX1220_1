@@ -279,12 +279,12 @@ void SceneA2::DEBUG_Pathfind()
         if (result) LOGINFO("Path found");
         else LOGINFO("Path blocked");
 
-        for (const auto& a : course)
-            LOGINFO(a.first << '.' << a.second);
+//        for (const auto& a : course)
+//            LOGINFO(a.first << '.' << a.second);
     }
 
     timer += Application::DELTATIME;
-    if (timer > 0.5f && !course.empty())
+    if (timer > 0.1f && !course.empty())
     {
         timer = 0.f;
         _maze.teleportEntity(_player,*(course.end()-1));

@@ -405,6 +405,14 @@ bool Maze::pathfind(EntityLite* ent, vec2 end, std::vector<vec2>& output)
         }
     }
 
+    vec2 a = node;
+    while (cellData[coordToIndex(a)].prev != a)
+    {
+        output.emplace_back(a);
+        a = cellData[coordToIndex(a)].prev;
+    }
+    output.emplace_back(a);
+
     return false;
 }
 #pragma clang diagnostic pop
