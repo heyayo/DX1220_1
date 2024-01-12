@@ -60,3 +60,8 @@ bool TurnMeter::doTurn()
 }
 
 TurnMeter::TurnMeter(Maze& maze) : _maze(maze) {}
+
+Actor::Actor(EntityLite *o)
+{
+    owner = o;
+}

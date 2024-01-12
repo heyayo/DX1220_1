@@ -20,6 +20,8 @@ struct Actor
     EntityLite* owner;
     std::optional<TurnAction> action;
 
+    Actor(EntityLite* o);
+
     virtual void think() = 0;
 };
 

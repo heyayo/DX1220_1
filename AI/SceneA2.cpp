@@ -10,8 +10,11 @@
 #define LOGINFO(msg) std::cout << "[INFO]\t" << msg << std::endl
 
 unsigned player_texture;
+unsigned enemy_texture;
+
 unsigned grass_texture;
 unsigned brick_texture;
+unsigned swamp_texture;
 
 Mesh* _red;
 
@@ -54,13 +57,17 @@ void SceneA2::Init()
     player_texture = Application::LoadImage("Image/sword.png");
     grass_texture = Application::LoadImage("Image/grass.png");
     brick_texture = Application::LoadImage("Image/bricks.png");
+    swamp_texture = Application::LoadImage("Image/mud.png");
+    enemy_texture = Application::LoadImage("Image/freeza.png");
 
     _brickWall.texture = brick_texture;
     //_maze.init(50,50, grass_texture);
     MazeTile lookup[] = {
-            MazeTile{nullptr,grass_texture},
-            MazeTile{&_brickWall,grass_texture}};
-    _maze.init(20,30,"map.csv",lookup);
+            MazeTile{nullptr,grass_texture,1},
+            MazeTile{&_brickWall,grass_texture,1},
+            MazeTile{nullptr,swamp_texture,2}
+    };
+    _maze.init(20, 30, "map.csv", lookup, _mobs, EnemySpawnData{enemy_texture,6,3});
     auto hits = _maze.raycast({5, 2}, {0, 0}, nullptr);
     for (auto x : hits.hits)
         std::cout << x.second.first << ' ' << x.second.second << std::endl;
@@ -72,6 +79,9 @@ void SceneA2::Init()
     _player = _maze.spawnEntity();
     _player->texture = player_texture;
     _player->modifier = PUSHABLE;
+    _player->base_points = 10;
+    _player->action_points = 10;
+    _mobs.emplace_back(_player);
 
     std::cout << "PTR DIFF: " << &_maze[0] - &_maze[5] << std::endl;
 
@@ -100,9 +110,25 @@ void SceneA2::Update(double deltaTime)
     if (Application::IsKeyPressed(GLFW_KEY_UP))
         _maze.moveEntity(_player,{0,1});
 
-    if (!_playerTurn)
+    if (_playerTurn)
     {
-        _turnmeter.doTurn();
+        PlayerChoice();
+
+        // End Turn
+        if (Application::IsKeyPressed(GLFW_KEY_SPACE))
+        {
+            _playerTurn = false;
+            LOGINFO("Player Ended Turn");
+        }
+    }
+    else
+    {
+        if (DoTurn()) // Is Turn Done
+        {
+            LOGINFO("Turn Ended");
+            if (NextTurn()) // Has Turn Cycled
+                _playerTurn = true; // Player's Turn
+        }
     }
 }
 
@@ -110,11 +136,16 @@ void SceneA2::Render()
 {
     SceneBase::Render();
 
+    modelStack.PushMatrix();
+    modelStack.Translate(0.5f,0.5f,0);
     glDisable(GL_DEPTH_TEST);
     RenderMaze();
     //DEBUG_Raycast();
-    DEBUG_Pathfind();
+    //DEBUG_Pathfind();
+    RenderCourseLine(_player->course);
     //RenderEntities();
+    modelStack.PopMatrix();
+
 }
 
 void SceneA2::Exit()
@@ -125,8 +156,6 @@ void SceneA2::Exit()
 void SceneA2::RenderMaze()
 {
     const int count = _maze.getTileCount();
-    modelStack.PushMatrix();
-    modelStack.Translate(0.5f,0.5f,0);
     for (int i = 0; i < count; ++i)
     {
         auto pos = _maze.indexToCoord(i);
@@ -134,6 +163,7 @@ void SceneA2::RenderMaze()
         _square->textureID = tile.texture;
         modelStack.PushMatrix();
         modelStack.Translate(pos.first,pos.second,0);
+        modelStack.Rotate(180,0,0,1);
         RenderMesh(_square,false);
         if (tile.entity)
         {
@@ -143,14 +173,11 @@ void SceneA2::RenderMaze()
         modelStack.PopMatrix();
         _square->textureID = 0;
     }
-    modelStack.PopMatrix();
 }
 
 void SceneA2::RenderMazeWithFog()
 {
     const int radius = 3;
-    modelStack.PushMatrix();
-    modelStack.Translate(0.5f,0.5f,0);
     //int start = _maze.coordToIndex(_maze.getEntityPosition(_player));
     vec2 start = _maze.getEntityPosition(_player);
     for (int i = 0; i < radius; ++i)
@@ -179,6 +206,7 @@ void SceneA2::RenderMazeWithFog()
             _square->textureID = tile.texture;
             modelStack.PushMatrix();
             modelStack.Translate(pos.first,pos.second,0);
+            modelStack.Rotate(180,0,0,1);
             RenderMesh(_square,false);
             if (tile.entity)
             {
@@ -191,25 +219,38 @@ void SceneA2::RenderMazeWithFog()
         }
         start = _maze.right(start);
     }
-    modelStack.PopMatrix();
 }
 
 void SceneA2::RenderEntities()
 {
     const auto& entities = _maze.getEntities();
-    modelStack.PushMatrix();
-    modelStack.Translate(0.5f,0.5f,0);
     for (int i = 0; i < entities.size(); ++i)
     {
         _square->textureID = entities[i]->texture;
         modelStack.PushMatrix();
         vec2 pos = _maze.getEntityPosition(entities[i]);
         modelStack.Translate(pos.first,pos.second,0);
+        modelStack.Rotate(180,0,0,1);
         RenderMesh(_square,false);
         modelStack.PopMatrix();
         _square->textureID = 0;
     }
-    modelStack.PopMatrix();
+}
+
+void SceneA2::RenderCourseLine(const std::vector<vec2>& course)
+{
+    for (int i = 0; i < course.size(); ++i)
+    {
+        const auto& x = course[i];
+        modelStack.PushMatrix();
+
+        modelStack.Translate(x.first,x.second,0);
+        modelStack.Scale(0.2f,0.2f,1);
+        RenderMesh(_square,false);
+
+        modelStack.PopMatrix();
+    }
+
 }
 
 void SceneA2::MoveCamera(const Vector3& offset)
@@ -317,4 +358,57 @@ vec2 SceneA2::GetMousePosition()
     y /= x_tile_scale;
     y += camera.position.y;
     return {x,y};
+}
+
+void SceneA2::PlayerChoice()
+{
+    if (Application::IsMouseJustPressed(0))
+    {
+        auto mousePos = GetMousePosition();
+        _player->course.clear();
+        bool result = _maze.pathfind(_player,mousePos,_player->course);
+        if (result) LOGINFO("Path found");
+        else LOGINFO("Path blocked");
+    }
+}
+
+bool SceneA2::NextTurn()
+{
+    _mobs[_turn]->action_points = _mobs[_turn]->base_points;
+    _mobs[_turn]->course.clear();
+    size_t old = _turn;
+    ++_turn;
+    _turn %= _mobs.size();
+    return old > _turn;
+}
+
+bool SceneA2::DoTurn()
+{
+    static double timer = 0.0;
+
+    EntityLite* thisTurn = _mobs[_turn];
+
+    if (!thisTurn)
+        return true;
+    if (thisTurn->course.empty()) return true;
+
+    timer += Application::DELTATIME;
+    if (timer > 0.25)
+    {
+        vec2 tilePos = *(thisTurn->course.end()-1);
+        auto index = _maze.coordToIndex(tilePos);
+        const auto& tile = _maze[index];
+
+        if (thisTurn->action_points < tile.cost)
+            thisTurn->course.clear(); // End Turn;
+        else
+        {
+            timer = 0;
+            _maze.teleportEntity(_player,tilePos);
+            thisTurn->course.erase(thisTurn->course.end()-1);
+            thisTurn->action_points -= tile.cost;
+        }
+    }
+
+    return thisTurn->course.empty();
 }

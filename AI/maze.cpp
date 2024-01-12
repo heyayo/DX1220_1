@@ -19,7 +19,8 @@ void Maze::init(int w, int h, unsigned int base_texture)
         _mazeData[i].texture = base_texture;
 }
 
-void Maze::init(int w, int h, const std::string &csvFile, MazeTile* lookupTable)
+void Maze::init(int w, int h, const std::string& csvFile, MazeTile *lookupTable, std::vector<EntityLite*>& enemies,
+                EnemySpawnData spawn_data)
 {
     _width = w; _height = h;
     _larger = _width > _height ? _width : _height;
@@ -33,7 +34,16 @@ void Maze::init(int w, int h, const std::string &csvFile, MazeTile* lookupTable)
         auto close = mapFile.GetColumn<int>(i);
         for (int j = 0; j < _height; ++j)
         {
-            _mazeData[coordToIndex({i,j})] = lookupTable[close[_height - j - 1]];
+            int cellNumber = close[_height - j - 1];
+            _mazeData[coordToIndex({i,j})] = lookupTable[cellNumber];
+            if (cellNumber == spawn_data.spawnIndex)
+            {
+                auto e = spawnEntity({i,j});
+                e->action_points = spawn_data.action_points;
+                e->base_points = spawn_data.action_points;
+                e->texture = spawn_data.texture;
+                enemies.emplace_back(e);
+            }
         }
     }
 }
@@ -347,8 +357,6 @@ bool Maze::pathfind(EntityLite* ent, vec2 end, std::vector<vec2>& output)
     std::set<std::pair<double,vec2>> open;
     open.insert(std::make_pair(0.0, node));
 
-    vec2 lastgood = {};
-
     while (!open.empty())
     {
         auto p = *open.begin();
@@ -363,7 +371,12 @@ bool Maze::pathfind(EntityLite* ent, vec2 end, std::vector<vec2>& output)
         auto leftNode = left(node);
         auto rightNode = right(node);
         auto downNode = down(node);
-        vec2 nodes[] = {upNode,leftNode,rightNode,downNode};
+//        auto leftUpNode = up(left(node));
+//        auto upRightNode = right(up(node));
+//        auto rightDownNode = down(right(node));
+//        auto downLeftNode = left(down(node));
+        vec2 nodes[] = {upNode,downNode,rightNode,leftNode};
+                        //,upRightNode,leftUpNode,downLeftNode,rightDownNode};
         for (auto& nextNode : nodes)
         {
             if (withinBounds(nextNode))
@@ -374,7 +387,7 @@ bool Maze::pathfind(EntityLite* ent, vec2 end, std::vector<vec2>& output)
                 {
                     cellData[coordToIndex(nextNode)].prev = node;
                     vec2 a = end;
-                    while (cellData[coordToIndex(a)].prev != a)
+                    while (!V2E(a, cellData[coordToIndex(a)].prev))
                     {
                         output.emplace_back(a);
                         a = cellData[coordToIndex(a)].prev;
@@ -385,11 +398,11 @@ bool Maze::pathfind(EntityLite* ent, vec2 end, std::vector<vec2>& output)
                 if (!closed[coordToIndex(nextNode)])
                 {
                     if (_mazeData[coordToIndex(nextNode)].entity)
-                    if (_mazeData[coordToIndex(nextNode)].entity->modifier != PUSHABLE) continue;
+                        if (_mazeData[coordToIndex(nextNode)].entity->modifier != PUSHABLE) continue;
 
                     auto& cell = cellData[coordToIndex(nextNode)];
-                    g = cell.g + 1.f;
-                    h = GetHeuristic(V2Minus(nextNode, end));
+                    g = cellData[coordToIndex(node)].g + 1.0;
+                    h = GetHeuristic(V2FMinus(nextNode, end));
                     f = g+h;
 
                     if (cell.f  >= std::numeric_limits<float>::max() ||
@@ -401,8 +414,6 @@ bool Maze::pathfind(EntityLite* ent, vec2 end, std::vector<vec2>& output)
                         cell.g = g;
                         cell.h = h;
                         cell.prev = node;
-
-                        lastgood = nextNode;
                     }
                 }
             }
@@ -413,7 +424,7 @@ bool Maze::pathfind(EntityLite* ent, vec2 end, std::vector<vec2>& output)
 }
 #pragma clang diagnostic pop
 
-float Maze::GetHeuristic(vec2 vec)
+float Maze::GetHeuristic(vec2f vec)
 {
     auto aSQ = vec.first * vec.first;
     auto bSQ = vec.second * vec.second;
@@ -431,6 +442,9 @@ bool Maze::V2E(vec2 a, vec2 b)
 { return a.first == b.first && a.second == b.second; }
 vec2 Maze::V2Minus(vec2 a, vec2 b)
 { return {b.first - a.first, b.second - a.second}; }
+
+vec2f Maze::V2FMinus(vec2f a, vec2f b)
+{ return {static_cast<float>(b.first) - static_cast<float>(a.first), static_cast<float>(b.second) - static_cast<float>(1)}; }
 
 void Maze::print_map()
 {

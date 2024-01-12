@@ -21,17 +21,24 @@ class SceneA2 : public SceneBase
     EntityLite* _player;
     EntityLite _brickWall;
 
+    std::vector<EntityLite*> _mobs;
+    size_t _turn = 0;
     bool _playerTurn = true;
 
     void RenderMaze();
     void RenderMazeWithFog();
     void RenderEntities();
+    void RenderCourseLine(const std::vector<vec2>& course);
     void MoveCamera(const Vector3& offset);
 
     vec2 GetMousePosition();
 
     void DEBUG_Raycast();
     void DEBUG_Pathfind();
+
+    void PlayerChoice();
+    bool DoTurn();
+    bool NextTurn();
 
 public:
     virtual void Init() override;

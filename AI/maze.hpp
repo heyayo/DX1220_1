@@ -14,6 +14,14 @@ struct MazeTile
 {
     EntityLite* entity = nullptr;
     unsigned texture = 0;
+    int cost = 1;
+};
+
+struct EnemySpawnData
+{
+    unsigned texture;
+    int action_points;
+    int spawnIndex;
 };
 
 struct RaycastHitInfo
@@ -35,9 +43,10 @@ class Maze
     std::unordered_map<EntityLite*,MazeTile*> _entityLocations;
 
     int FindNearestEmpty(int start);
-    float GetHeuristic(vec2 vec);
+    float GetHeuristic(vec2f vec);
     bool V2E(vec2 a, vec2 b);
     vec2 V2Minus(vec2 a, vec2 b);
+    vec2f V2FMinus(vec2f a, vec2f b);
 
     std::vector<vec2> raycastLow(vec2 origin, vec2 end);
     std::vector<vec2> raycastHigh(vec2 origin, vec2 end);
@@ -55,7 +64,8 @@ public:
     vec2 right(vec2 i) const;
 
     void init(int w, int h, unsigned base_texture = 0);
-    void init(int w, int h, const std::string &csvFile, MazeTile* lookupTable);
+    void init(int w, int h, const std::string& csvFile, MazeTile *lookupTable, std::vector<EntityLite*>& enemies,
+              EnemySpawnData spawn_data);
 
     constexpr const std::vector<EntityLite*>& getEntities()
     { return _entities; }
