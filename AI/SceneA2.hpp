@@ -8,6 +8,14 @@
 
 class SceneA2 : public SceneBase
 {
+    typedef void(SceneA2::*MAP_CODE)();
+    struct MAP_DATA
+    {
+        std::string file;
+        MAP_CODE init;
+        MAP_CODE update;
+    };
+
     int windowWidth;
     int windowHeight;
     const int cameraViewDistance = 25;
@@ -19,11 +27,14 @@ class SceneA2 : public SceneBase
     EntityLite* _player;
     EntityLite _brickWall;
     const vec2 hardcoded_map_endpoint{19,29};
-    std::string _maps[3];
+    MAP_DATA _maps[3];
+    std::vector<EnemySpawnData> spawn_data;
+    std::vector<MazeTile> lookup;
     size_t _currentMapIndex = 0;
 
     std::vector<EntityLite*> _mobs;
     size_t _turn = 0;
+    int _totalTurns = 0;
     bool _playerTurn = true;
     bool _playerLost = false;
     const int _playerActionPointsStandard = 10;
@@ -42,7 +53,15 @@ class SceneA2 : public SceneBase
     void PlayerChoice();
     bool DoTurn();
     bool NextTurn();
-    void GenerateMap(const std::string& map_file);
+    void GenerateMap(size_t mapcode);
+
+    void CODEINIT_MapOne();
+    void CODEINIT_MapTwo();
+    void CODEINIT_MapThree();
+
+    void CODEUPDATE_MapOne();
+    void CODEUPDATE_MapTwo();
+    void CODEUPDATE_MapThree();
 
 public:
     virtual void Init() override;

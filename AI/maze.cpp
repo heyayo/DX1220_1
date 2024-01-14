@@ -19,8 +19,8 @@ void Maze::init(int w, int h, unsigned int base_texture)
         _mazeData[i].texture = base_texture;
 }
 
-void Maze::init(int w, int h, const std::string& csvFile, MazeTile *lookupTable, std::vector<EntityLite*>& enemies,
-                EnemySpawnData spawn_data)
+void Maze::init(int w, int h, const std::string& csvFile, std::vector<MazeTile>& lookupTable, std::vector<EntityLite*>& enemies,
+                const std::vector<EnemySpawnData>& spawn_data)
 {
     _width = w; _height = h;
     _larger = _width > _height ? _width : _height;
@@ -35,6 +35,9 @@ void Maze::init(int w, int h, const std::string& csvFile, MazeTile *lookupTable,
     _entities.clear();
     _entityLocations.clear();
 
+    for (int i = 0; i < lookupTable.size(); ++i)
+        lookupTable[i].cell_id = i;
+
     rapidcsv::Document mapFile(csvFile,rapidcsv::LabelParams(-1,-1));
     for (int i = 0; i < _width; ++i)
     {
@@ -43,13 +46,17 @@ void Maze::init(int w, int h, const std::string& csvFile, MazeTile *lookupTable,
         {
             int cellNumber = close[_height - j - 1];
             _mazeData[coordToIndex({i,j})] = lookupTable[cellNumber];
-            if (cellNumber == spawn_data.spawnIndex)
+            for (const auto& data : spawn_data)
             {
-                auto e = spawnEntity({i,j});
-                e->action_points = spawn_data.action_points;
-                e->base_points = spawn_data.action_points;
-                e->texture = spawn_data.texture;
-                enemies.emplace_back(e);
+                if (cellNumber == data.spawnIndex)
+                {
+                    auto e = spawnEntity({i,j});
+                    e->action_points = data.action_points;
+                    e->base_points = data.action_points;
+                    e->texture = data.texture;
+                    enemies.emplace_back(e);
+                    continue;
+                }
             }
         }
     }
@@ -477,4 +484,17 @@ Maze::~Maze()
     _entities.clear();
     _entityLocations.clear();
     delete _mazeData; // Delete World
+}
+
+std::vector<size_t> Maze::getCells(int cellType)
+{
+    std::vector<size_t> cells;
+
+    for (size_t i = 0; i < getTileCount(); ++i)
+    {
+        if (_mazeData[i].cell_id == cellType)
+            cells.emplace_back(i);
+    }
+
+    return cells;
 }

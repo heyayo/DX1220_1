@@ -15,6 +15,7 @@ struct MazeTile
     EntityLite* entity = nullptr;
     unsigned texture = 0;
     int cost = 1;
+    int cell_id;
 };
 
 struct EnemySpawnData
@@ -67,8 +68,8 @@ public:
     vec2 right(vec2 i) const;
 
     void init(int w, int h, unsigned base_texture = 0);
-    void init(int w, int h, const std::string& csvFile, MazeTile *lookupTable, std::vector<EntityLite*>& enemies,
-              EnemySpawnData spawn_data);
+    void init(int w, int h, const std::string& csvFile, std::vector<MazeTile>& lookupTable, std::vector<EntityLite*>& enemies,
+              const std::vector<EnemySpawnData>& spawn_data);
 
     constexpr const std::vector<EntityLite*>& getEntities()
     { return _entities; }
@@ -90,7 +91,7 @@ public:
     { return tile - _mazeData; }
     constexpr vec2 getEntityPosition(EntityLite* ent)
     { return indexToCoord(tileToIndex(_entityLocations[ent])); }
-    constexpr const MazeTile& operator[](int index)
+    constexpr MazeTile& operator[](int index)
     { return _mazeData[index]; }
     EntityLite* spawnEntity(vec2 pos = {})
     {
@@ -119,6 +120,8 @@ public:
                 (vec.second) * (vec.second)
         );
     }
+
+    std::vector<size_t> getCells(int cellType);
 
     void print_map();
 };

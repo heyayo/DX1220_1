@@ -55,9 +55,9 @@ void SceneA2::Init()
     _playerLost = false;
 
     // Store Map Files to Load
-    _maps[0] = "mapone.csv";
-    _maps[1] = "maptwo.csv";
-    _maps[2] = "mapthree.csv";
+    _maps[0] = {"mapone.csv", &SceneA2::CODEINIT_MapOne, &SceneA2::CODEUPDATE_MapOne};
+    _maps[1] = {"maptwo.csv", &SceneA2::CODEINIT_MapTwo, &SceneA2::CODEUPDATE_MapTwo};
+    _maps[2] = {"mapthree.csv", &SceneA2::CODEINIT_MapThree, &SceneA2::CODEUPDATE_MapThree};
 
     _square = MeshBuilder::GenerateQuad("Square",{1,1,1}); // Generic Square Mesh
     _red = MeshBuilder::GenerateQuad("Square",{1,0,0}); // Generic Square Mesh
@@ -69,13 +69,20 @@ void SceneA2::Init()
 
     _brickWall.texture = brick_texture;
     //_maze.init(50,50, grass_texture);
-    MazeTile lookup[] = {
+    lookup = {
             MazeTile{nullptr,grass_texture,1},
             MazeTile{&_brickWall,grass_texture,1},
             MazeTile{nullptr,swamp_texture,2},
             MazeTile{nullptr,grass_texture,1}, // For Freeza Spawning
+            MazeTile{nullptr,grass_texture,1}, // For Freeza Spawning
+            MazeTile{&_brickWall,grass_texture,0},
+            MazeTile{nullptr,grass_texture,0}, // No cost Tile
     };
-    _maze.init(20, 30, _maps[_currentMapIndex], lookup, _mobs, EnemySpawnData{enemy_texture, 6, 3,0.4});
+    spawn_data = {
+            EnemySpawnData{enemy_texture, 6, 3, 0.4}
+    };
+    _maze.init(20, 30, _maps[_currentMapIndex].file, lookup, _mobs, spawn_data);
+    (this->*_maps[_currentMapIndex].init)(); // Call First MapCode
     auto hits = _maze.raycast({5, 2}, {0, 0}, nullptr);
     for (auto x : hits.hits)
         std::cout << x.second.first << ' ' << x.second.second << std::endl;
@@ -124,7 +131,7 @@ void SceneA2::Update(double deltaTime)
         PlayerChoice();
 
         // End Turn
-        if (Application::IsKeyPressed(GLFW_KEY_SPACE))
+        if (Application::IsMouseJustPressed(1))
         {
             _playerTurn = false;
             LOGINFO("Player Ended Turn");
@@ -136,7 +143,12 @@ void SceneA2::Update(double deltaTime)
         {
             LOGINFO("Turn Ended");
             if (NextTurn()) // Has Turn Cycled
+            {
+                LOGINFO("Player's Turn");
                 _playerTurn = true; // Player's Turn
+                _totalTurns += 1;
+                (this->*_maps[_currentMapIndex].update)();
+            }
         }
     }
     if (_maze.getEntityPosition(_player) == hardcoded_map_endpoint)
@@ -144,16 +156,19 @@ void SceneA2::Update(double deltaTime)
         // Next Map
         ++_currentMapIndex;
         _currentMapIndex %= 3;
-        GenerateMap(_maps[_currentMapIndex]);
+        GenerateMap(_currentMapIndex);
         _turn = 0;
     }
     if (_playerLost)
     {
         _currentMapIndex = 0;
-        GenerateMap(_maps[_currentMapIndex]);
+        GenerateMap(_currentMapIndex);
         _playerLost = false;
         _playerTurn = true;
+        _totalTurns = 0;
     }
+
+    (this->*_maps[_currentMapIndex].update)(); // Call Update for this map
 }
 
 void SceneA2::Render()
@@ -450,15 +465,10 @@ bool SceneA2::DoTurn()
     return thisTurn->course.empty();
 }
 
-void SceneA2::GenerateMap(const std::string& map_file)
+void SceneA2::GenerateMap(size_t mapcode)
 {
-    MazeTile lookup[] = {
-            MazeTile{nullptr,grass_texture,1},
-            MazeTile{&_brickWall,grass_texture,1},
-            MazeTile{nullptr,swamp_texture,2},
-            MazeTile{nullptr,grass_texture,1}, // For Freeza Spawning
-    };
-    _maze.init(20, 30, map_file, lookup, _mobs, EnemySpawnData{enemy_texture,6,3});
+    _maze.init(20, 30, _maps[mapcode].file, lookup, _mobs, spawn_data);
+    (this->*_maps[mapcode].init)();
     auto hits = _maze.raycast({5, 2}, {0, 0}, nullptr);
     for (auto x : hits.hits)
         std::cout << x.second.first << ' ' << x.second.second << std::endl;
@@ -474,4 +484,86 @@ void SceneA2::GenerateMap(const std::string& map_file)
     _player->action_points = _playerActionPointsStandard;
     _player->speed = 0.1;
     _mobs.emplace(_mobs.begin(),_player);
+}
+
+std::vector<std::vector<size_t>> map_switching_cells;
+MazeTile no_cost_tile
+        {
+    nullptr,
+    grass_texture,
+    0,99999 // Cell ID Lost After Loading
+        };
+
+void SceneA2::CODEINIT_MapOne()
+{
+    map_switching_cells.clear();
+
+    auto five = _maze.getCells(5);
+    auto six = _maze.getCells(6);
+
+    map_switching_cells.emplace_back(five);
+    map_switching_cells.emplace_back(six);
+}
+
+void SceneA2::CODEUPDATE_MapOne()
+{
+    static int turn_timer = _totalTurns;
+    static bool five_or_six = false;
+
+    if (_totalTurns - turn_timer > 2)
+    {
+        LOGINFO("Turn Diff: " << _totalTurns - turn_timer);
+        turn_timer = _totalTurns;
+        if (five_or_six)
+        {
+            five_or_six = false;
+            for (auto f : map_switching_cells[1])
+                _maze[f].entity = nullptr;
+            for (auto f : map_switching_cells[0])
+                _maze[f].entity = &_brickWall;
+        }
+        else
+        {
+            five_or_six = true;
+            for (auto f : map_switching_cells[1])
+                _maze[f].entity = &_brickWall;
+            for (auto f : map_switching_cells[0])
+                _maze[f].entity = nullptr;
+        }
+    }
+}
+
+void SceneA2::CODEINIT_MapTwo()
+{
+    map_switching_cells.clear();
+
+    auto five = _maze.getCells(5);
+    auto six = _maze.getCells(6);
+    auto seven = _maze.getCells(7);
+
+    map_switching_cells.emplace_back(five);
+    map_switching_cells.emplace_back(six);
+    map_switching_cells.emplace_back(seven);
+
+    for (auto f : five)
+        _maze[f] = no_cost_tile;
+    for (auto f : six)
+        _maze[f] = no_cost_tile;
+    for (auto f : seven)
+        _maze[f] = no_cost_tile;
+}
+
+void SceneA2::CODEUPDATE_MapTwo()
+{
+
+}
+
+void SceneA2::CODEINIT_MapThree()
+{
+
+}
+
+void SceneA2::CODEUPDATE_MapThree()
+{
+
 }
