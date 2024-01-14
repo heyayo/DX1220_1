@@ -22,6 +22,7 @@ struct EnemySpawnData
     unsigned texture;
     int action_points;
     int spawnIndex;
+    double base_speed;
 };
 
 struct RaycastHitInfo
@@ -52,6 +53,8 @@ class Maze
     std::vector<vec2> raycastHigh(vec2 origin, vec2 end);
 
 public:
+
+    ~Maze();
 
     bool withinBounds(vec2 pos);
     int up(int i) const;

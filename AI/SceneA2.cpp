@@ -52,6 +52,13 @@ void SceneA2::Init()
     viewStack.LoadIdentity();
     viewStack.LoadMatrix(viewMatrix);
 
+    _playerLost = false;
+
+    // Store Map Files to Load
+    _maps[0] = "mapone.csv";
+    _maps[1] = "maptwo.csv";
+    _maps[2] = "mapthree.csv";
+
     _square = MeshBuilder::GenerateQuad("Square",{1,1,1}); // Generic Square Mesh
     _red = MeshBuilder::GenerateQuad("Square",{1,0,0}); // Generic Square Mesh
     player_texture = Application::LoadImage("Image/sword.png");
@@ -65,9 +72,10 @@ void SceneA2::Init()
     MazeTile lookup[] = {
             MazeTile{nullptr,grass_texture,1},
             MazeTile{&_brickWall,grass_texture,1},
-            MazeTile{nullptr,swamp_texture,2}
+            MazeTile{nullptr,swamp_texture,2},
+            MazeTile{nullptr,grass_texture,1}, // For Freeza Spawning
     };
-    _maze.init(20, 30, "map.csv", lookup, _mobs, EnemySpawnData{enemy_texture,6,3});
+    _maze.init(20, 30, _maps[_currentMapIndex], lookup, _mobs, EnemySpawnData{enemy_texture, 6, 3,0.4});
     auto hits = _maze.raycast({5, 2}, {0, 0}, nullptr);
     for (auto x : hits.hits)
         std::cout << x.second.first << ' ' << x.second.second << std::endl;
@@ -79,9 +87,10 @@ void SceneA2::Init()
     _player = _maze.spawnEntity();
     _player->texture = player_texture;
     _player->modifier = PUSHABLE;
-    _player->base_points = 10;
-    _player->action_points = 10;
-    _mobs.emplace_back(_player);
+    _player->base_points = _playerActionPointsStandard;
+    _player->action_points = _playerActionPointsStandard;
+    _player->speed = 0.1;
+    _mobs.emplace(_mobs.begin(),_player);
 
     std::cout << "PTR DIFF: " << &_maze[0] - &_maze[5] << std::endl;
 
@@ -129,6 +138,21 @@ void SceneA2::Update(double deltaTime)
             if (NextTurn()) // Has Turn Cycled
                 _playerTurn = true; // Player's Turn
         }
+    }
+    if (_maze.getEntityPosition(_player) == hardcoded_map_endpoint)
+    {
+        // Next Map
+        ++_currentMapIndex;
+        _currentMapIndex %= 3;
+        GenerateMap(_maps[_currentMapIndex]);
+        _turn = 0;
+    }
+    if (_playerLost)
+    {
+        _currentMapIndex = 0;
+        GenerateMap(_maps[_currentMapIndex]);
+        _playerLost = false;
+        _playerTurn = true;
     }
 }
 
@@ -379,6 +403,11 @@ bool SceneA2::NextTurn()
     size_t old = _turn;
     ++_turn;
     _turn %= _mobs.size();
+
+    if (_mobs[_turn] != _player)
+        _maze.pathfind(_mobs[_turn],_maze.getEntityPosition(_player),_mobs[_turn]->course);
+    LOGINFO("TURN: " << _turn);
+
     return old > _turn;
 }
 
@@ -393,7 +422,7 @@ bool SceneA2::DoTurn()
     if (thisTurn->course.empty()) return true;
 
     timer += Application::DELTATIME;
-    if (timer > 0.25)
+    if (timer > thisTurn->speed)
     {
         vec2 tilePos = *(thisTurn->course.end()-1);
         auto index = _maze.coordToIndex(tilePos);
@@ -403,12 +432,46 @@ bool SceneA2::DoTurn()
             thisTurn->course.clear(); // End Turn;
         else
         {
+            if (thisTurn != _player)
+            {
+                if (tilePos == _maze.getEntityPosition(_player))
+                {
+                    // Do before teleporting to ensure that tilePos is indeed the player's position
+                    _playerLost = true; // Toggle Game End
+                }
+            }
             timer = 0;
-            _maze.teleportEntity(_player,tilePos);
+            _maze.teleportEntity(thisTurn,tilePos);
             thisTurn->course.erase(thisTurn->course.end()-1);
             thisTurn->action_points -= tile.cost;
         }
     }
 
     return thisTurn->course.empty();
+}
+
+void SceneA2::GenerateMap(const std::string& map_file)
+{
+    MazeTile lookup[] = {
+            MazeTile{nullptr,grass_texture,1},
+            MazeTile{&_brickWall,grass_texture,1},
+            MazeTile{nullptr,swamp_texture,2},
+            MazeTile{nullptr,grass_texture,1}, // For Freeza Spawning
+    };
+    _maze.init(20, 30, map_file, lookup, _mobs, EnemySpawnData{enemy_texture,6,3});
+    auto hits = _maze.raycast({5, 2}, {0, 0}, nullptr);
+    for (auto x : hits.hits)
+        std::cout << x.second.first << ' ' << x.second.second << std::endl;
+    std::cout << "AA" << std::endl;
+    hits = _maze.raycast({0, 0}, {5, 2}, nullptr);
+    for (auto x : hits.hits)
+        std::cout << x.second.first << ' ' << x.second.second << std::endl;
+
+    _player = _maze.spawnEntity();
+    _player->texture = player_texture;
+    _player->modifier = PUSHABLE;
+    _player->base_points = _playerActionPointsStandard;
+    _player->action_points = _playerActionPointsStandard;
+    _player->speed = 0.1;
+    _mobs.emplace(_mobs.begin(),_player);
 }

@@ -20,7 +20,7 @@ struct EntityLite
     std::vector<vec2> course;
     int action_points = 0;
     int base_points = 0;
+    double speed = 0.25;
 };
-
 
 #endif //DX1220_ENTITYLITE_HPP

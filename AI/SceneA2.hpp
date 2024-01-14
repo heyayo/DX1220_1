@@ -3,7 +3,6 @@
 
 #include "SceneBase.h"
 #include "maze.hpp"
-#include "turnmeter.hpp"
 
 #include "GLFW/glfw3.h"
 
@@ -16,14 +15,18 @@ class SceneA2 : public SceneBase
 
     Mesh* _square;
     Maze _maze;
-    TurnMeter _turnmeter{_maze};
 
     EntityLite* _player;
     EntityLite _brickWall;
+    const vec2 hardcoded_map_endpoint{19,29};
+    std::string _maps[3];
+    size_t _currentMapIndex = 0;
 
     std::vector<EntityLite*> _mobs;
     size_t _turn = 0;
     bool _playerTurn = true;
+    bool _playerLost = false;
+    const int _playerActionPointsStandard = 10;
 
     void RenderMaze();
     void RenderMazeWithFog();
@@ -39,6 +42,7 @@ class SceneA2 : public SceneBase
     void PlayerChoice();
     bool DoTurn();
     bool NextTurn();
+    void GenerateMap(const std::string& map_file);
 
 public:
     virtual void Init() override;

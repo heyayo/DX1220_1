@@ -28,6 +28,13 @@ void Maze::init(int w, int h, const std::string& csvFile, MazeTile *lookupTable,
     delete _mazeData;
     _mazeData = new MazeTile[_width * _height];
 
+    // Clear out Enemies
+    for (auto enemy : enemies)
+        delete enemy;
+    enemies.clear();
+    _entities.clear();
+    _entityLocations.clear();
+
     rapidcsv::Document mapFile(csvFile,rapidcsv::LabelParams(-1,-1));
     for (int i = 0; i < _width; ++i)
     {
@@ -461,4 +468,13 @@ void Maze::print_map()
         std::cout << std::endl;
     }
     std::cout << std::endl;
+}
+
+Maze::~Maze()
+{
+    for (auto ent : _entities)
+        delete ent;
+    _entities.clear();
+    _entityLocations.clear();
+    delete _mazeData; // Delete World
 }

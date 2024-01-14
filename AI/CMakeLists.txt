@@ -24,8 +24,6 @@ add_executable(
         maze.cpp
         entitylite.cpp
         entitylite.hpp
-        turnmeter.cpp
-        turnmeter.hpp
 )
 
 target_include_directories(AIEXEC PUBLIC ${CMAKE_SOURCE_DIR}/Common/)
