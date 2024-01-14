@@ -51,4 +51,16 @@ public:
     virtual void Exit() override;
 };
 
+/*
+ * TODO LIST
+ * Swap Enemies for StateMachines to allow for IDLE Wander, Sight Checking and Damage Attacks as opposed to currently insta kill
+ * Add Extra Movement Tiles
+ * Add Lightning Strikes (Reveal whole map temporarily)
+ * Actions towards other entities and world Entities (Use Dice Roll Mechanic)
+ * Random Maze Paths
+ * Enemy States:
+ *  Attack on Sight (Raycast Sight Checking) (Retain sight for x turns)
+ *  Patrol (Randomize Direction and travel in a straight line)
+ */
+
 #endif //DX1220_SCENE_A_2_HPP
