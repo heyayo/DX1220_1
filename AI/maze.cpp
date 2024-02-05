@@ -45,7 +45,14 @@ void Maze::init(int w, int h, const std::string& csvFile, std::vector<MazeTile>&
         for (int j = 0; j < _height; ++j)
         {
             int cellNumber = close[_height - j - 1];
+            int cellNumberBackup = cellNumber;
+            if (cellNumber < 0 || cellNumber >= lookupTable.size())
+            {
+                std::cerr << "Attempted To Place Invalid Tile" << std::endl;
+                cellNumber = 0;
+            }
             _mazeData[coordToIndex({i,j})] = lookupTable[cellNumber];
+            _mazeData[coordToIndex({i,j})].cell_id = cellNumberBackup;
             for (const auto& data : spawn_data)
             {
                 if (cellNumber == data.spawnIndex)
@@ -54,6 +61,7 @@ void Maze::init(int w, int h, const std::string& csvFile, std::vector<MazeTile>&
                     e->action_points = data.action_points;
                     e->base_points = data.action_points;
                     e->texture = data.texture;
+                    e->speed = data.base_speed;
                     enemies.emplace_back(e);
                     continue;
                 }
@@ -356,6 +364,12 @@ struct AStarCell
 // Following https://www.geeksforgeeks.org/a-search-algorithm/
 bool Maze::pathfind(EntityLite* ent, vec2 end, std::vector<vec2>& output)
 {
+    if (getEntityPosition(ent) == end)
+    {
+        std::cout << "Cannot Pathfind to Self" << std::endl;
+        return false;
+    }
+
     std::vector<bool> closed(getTileCount(),false);
     std::vector<AStarCell> cellData(getTileCount());
 

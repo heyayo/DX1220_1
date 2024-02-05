@@ -15,6 +15,7 @@ unsigned enemy_texture;
 unsigned grass_texture;
 unsigned brick_texture;
 unsigned swamp_texture;
+unsigned end_level_texture;
 
 Mesh* _red;
 
@@ -61,11 +62,12 @@ void SceneA2::Init()
 
     _square = MeshBuilder::GenerateQuad("Square",{1,1,1}); // Generic Square Mesh
     _red = MeshBuilder::GenerateQuad("Square",{1,0,0}); // Generic Square Mesh
-    player_texture = Application::LoadImage("Image/sword.png");
+    player_texture = Application::LoadImage("Image/goku.png");
     grass_texture = Application::LoadImage("Image/grass.png");
     brick_texture = Application::LoadImage("Image/bricks.png");
     swamp_texture = Application::LoadImage("Image/mud.png");
     enemy_texture = Application::LoadImage("Image/freeza.png");
+    end_level_texture = Application::LoadImage("Image/endlevel.png");
 
     _brickWall.texture = brick_texture;
     //_maze.init(50,50, grass_texture);
@@ -74,12 +76,12 @@ void SceneA2::Init()
             MazeTile{&_brickWall,grass_texture,1},
             MazeTile{nullptr,swamp_texture,2},
             MazeTile{nullptr,grass_texture,1}, // For Freeza Spawning
-            MazeTile{nullptr,grass_texture,1}, // For Freeza Spawning
-            MazeTile{&_brickWall,grass_texture,0},
+            MazeTile{nullptr,grass_texture,1}, // For Freeza Spawning ( UNUSED )
+            MazeTile{&_brickWall,grass_texture,0}, // TIMER ALTERING WALLS
             MazeTile{nullptr,grass_texture,0}, // No cost Tile
     };
     spawn_data = {
-            EnemySpawnData{enemy_texture, 6, 3, 0.4}
+            EnemySpawnData{enemy_texture, 6, 3, 0.1}
     };
     _maze.init(20, 30, _maps[_currentMapIndex].file, lookup, _mobs, spawn_data);
     (this->*_maps[_currentMapIndex].init)(); // Call First MapCode
@@ -116,6 +118,21 @@ void SceneA2::Update(double deltaTime)
         MoveCamera({0,-camSpeed,0});
     if (Application::IsKeyPressed(GLFW_KEY_W))
         MoveCamera({0,camSpeed,0});
+    if (Application::IsKeyPressed(GLFW_KEY_SPACE))
+    {
+        vec2 playerPos = _maze.getEntityPosition(_player);
+        camera.position = {static_cast<float>(playerPos.first)-12.5f,static_cast<float>(playerPos.second)-12.5f*aspectRatio,1};
+        camera.target = {static_cast<float>(playerPos.first)-12.5f,static_cast<float>(playerPos.second)-12.5f*aspectRatio,0};
+
+        // Recalculate based off new values
+        Mtx44 viewMatrix;
+        viewMatrix.SetToLookAt(
+                UnpackVector(camera.position),
+                UnpackVector(camera.target),
+                UnpackVector(camera.up)
+        );
+        viewStack.LoadMatrix(viewMatrix);
+    }
 
     if (Application::IsKeyPressed(GLFW_KEY_LEFT))
         _maze.moveEntity(_player,{-1,0});
@@ -178,13 +195,34 @@ void SceneA2::Render()
     modelStack.PushMatrix();
     modelStack.Translate(0.5f,0.5f,0);
     glDisable(GL_DEPTH_TEST);
-    RenderMaze();
+    //RenderMaze();
+    RenderMazeWithFog();
     //DEBUG_Raycast();
     //DEBUG_Pathfind();
     RenderCourseLine(_player->course);
     //RenderEntities();
     modelStack.PopMatrix();
 
+    static const Color textColor{1,.5,.5};
+    // Render Text to Tell Player it is their turn
+    if (_playerTurn)
+    {
+        RenderTextOnScreen(meshList[GEO_TEXT],"Player's Turn",textColor,40,0,0);
+    }
+    else
+    {
+        RenderTextOnScreen(meshList[GEO_TEXT],"AI Turn",textColor,40,0,0);
+    }
+
+    // Render Helper Texts
+    std::string AP_warning = std::to_string(_player->action_points) + " Action Points Left";
+    RenderTextOnScreen(meshList[GEO_TEXT], AP_warning, textColor, 40, 0, 40);
+    std::string warning_text = std::to_string(_sighted.size()) + " Enemies Can See You";
+    RenderTextOnScreen(meshList[GEO_TEXT], warning_text, textColor, 40, 0, 80);
+    RenderTextOnScreen(meshList[GEO_TEXT],"Left Click To Choose Where To Go",textColor,40,0,120);
+    RenderTextOnScreen(meshList[GEO_TEXT],"Right Click To End Turn",textColor,40,0,160);
+    RenderTextOnScreen(meshList[GEO_TEXT],"WASD To Move Camera",textColor,40,0,200);
+    RenderTextOnScreen(meshList[GEO_TEXT],"Press Space To Center Camera On Player",textColor,40,0,240);
 }
 
 void SceneA2::Exit()
@@ -216,22 +254,21 @@ void SceneA2::RenderMaze()
 
 void SceneA2::RenderMazeWithFog()
 {
-    const int radius = 3;
     //int start = _maze.coordToIndex(_maze.getEntityPosition(_player));
     vec2 start = _maze.getEntityPosition(_player);
-    for (int i = 0; i < radius; ++i)
+    for (int i = 0; i < playerFogViewRadius; ++i)
     {
         start = _maze.left(start);
     }
-    for (int j = 0; j < radius; ++j)
+    for (int j = 0; j < playerFogViewRadius; ++j)
     {
         start = _maze.up(start);
     }
-    for (int i = 0; i < radius*2+1; ++i)
+    for (int i = 0; i < playerFogViewRadius*2+1; ++i)
     {
         //int col = start;
         vec2 col = start;
-        for (int j = 0; j < radius*2+1; ++j)
+        for (int j = 0; j < playerFogViewRadius*2+1; ++j)
         {
             //auto pos = _maze.indexToCoord(col);
             auto pos = col;
@@ -260,6 +297,28 @@ void SceneA2::RenderMazeWithFog()
     }
 }
 
+void SceneA2::RenderFogOverlay()
+{
+    const int count = _maze.getTileCount();
+    for (int i = 0; i < count; ++i)
+    {
+        auto pos = _maze.indexToCoord(i);
+        auto tile = _maze[i];
+        _square->textureID = tile.texture;
+        modelStack.PushMatrix();
+        modelStack.Translate(pos.first,pos.second,0);
+        modelStack.Rotate(180,0,0,1);
+        RenderMesh(_square,false);
+        if (tile.entity)
+        {
+            _square->textureID = tile.entity->texture;
+            RenderMesh(_square,false);
+        }
+        modelStack.PopMatrix();
+        _square->textureID = 0;
+    }
+}
+
 void SceneA2::RenderEntities()
 {
     const auto& entities = _maze.getEntities();
@@ -278,9 +337,12 @@ void SceneA2::RenderEntities()
 
 void SceneA2::RenderCourseLine(const std::vector<vec2>& course)
 {
-    for (int i = 0; i < course.size(); ++i)
+    auto copy = course;
+    int i_Max = course.size() > _playerActionPointsStandard ? _playerActionPointsStandard : course.size();
+    std::reverse(copy.begin(),copy.end());
+    for (int i = 0; i < i_Max; ++i)
     {
-        const auto& x = course[i];
+        const auto& x = copy[i];
         modelStack.PushMatrix();
 
         modelStack.Translate(x.first,x.second,0);
@@ -413,14 +475,35 @@ void SceneA2::PlayerChoice()
 
 bool SceneA2::NextTurn()
 {
-    _mobs[_turn]->action_points = _mobs[_turn]->base_points;
-    _mobs[_turn]->course.clear();
+    EntityLite* mob = _mobs[_turn];
+
+    mob->action_points = _mobs[_turn]->base_points;
+    mob->course.clear();
     size_t old = _turn;
     ++_turn;
     _turn %= _mobs.size();
 
-    if (_mobs[_turn] != _player)
-        _maze.pathfind(_mobs[_turn],_maze.getEntityPosition(_player),_mobs[_turn]->course);
+    // Enemy Thinking Phase
+    if (mob != _player)
+    {
+        auto res = _maze.raycast(_maze.getEntityPosition(mob),_maze.getEntityPosition(_player),mob);
+        if (res.firstHit && res.firstHit->entity == _player)
+        {
+            // Chase State
+            _maze.pathfind(mob,_maze.getEntityPosition(_player),mob->course);
+            LOGINFO("Player in Line of Sight");
+            _sighted.insert(mob);
+        }
+        else
+        {
+            // Patrol State
+            std::uniform_int_distribution<int> distribution(0,_possiblePatrolPoints.size()-1);
+            int random = distribution(Application::randomthing);
+            _maze.pathfind(mob,_maze.indexToCoord(_possiblePatrolPoints[random]),mob->course);
+            LOGINFO("Enemy Wandering");
+            _sighted.erase(mob);
+        }
+    }
     LOGINFO("TURN: " << _turn);
 
     return old > _turn;
@@ -455,6 +538,12 @@ bool SceneA2::DoTurn()
                     _playerLost = true; // Toggle Game End
                 }
             }
+            if (tile.entity != thisTurn && tile.entity != nullptr)
+            {
+                LOGINFO("TILE COLLISION | " << tile.entity << " | " << _player);
+                thisTurn->course.clear();
+                return true;
+            }
             timer = 0;
             _maze.teleportEntity(thisTurn,tilePos);
             thisTurn->course.erase(thisTurn->course.end()-1);
@@ -467,6 +556,8 @@ bool SceneA2::DoTurn()
 
 void SceneA2::GenerateMap(size_t mapcode)
 {
+    _sighted.clear();
+
     _maze.init(20, 30, _maps[mapcode].file, lookup, _mobs, spawn_data);
     (this->*_maps[mapcode].init)();
     auto hits = _maze.raycast({5, 2}, {0, 0}, nullptr);
@@ -497,12 +588,17 @@ MazeTile no_cost_tile
 void SceneA2::CODEINIT_MapOne()
 {
     map_switching_cells.clear();
+    _possiblePatrolPoints.clear();
 
     auto five = _maze.getCells(5);
     auto six = _maze.getCells(6);
+    _possiblePatrolPoints = _maze.getCells(10);
 
     map_switching_cells.emplace_back(five);
     map_switching_cells.emplace_back(six);
+
+    // Set the Ground Texture for the End Of Map Marker
+    _maze[_maze.coordToIndex(hardcoded_map_endpoint)].texture = end_level_texture;
 }
 
 void SceneA2::CODEUPDATE_MapOne()
@@ -518,17 +614,29 @@ void SceneA2::CODEUPDATE_MapOne()
         {
             five_or_six = false;
             for (auto f : map_switching_cells[1])
+            {
+                if (_maze[f].entity && _maze[f].entity != &_brickWall) continue;
                 _maze[f].entity = nullptr;
+            }
             for (auto f : map_switching_cells[0])
+            {
+                if (_maze[f].entity && _maze[f].entity != &_brickWall) continue;
                 _maze[f].entity = &_brickWall;
+            }
         }
         else
         {
             five_or_six = true;
             for (auto f : map_switching_cells[1])
+            {
+                if (_maze[f].entity && _maze[f].entity != &_brickWall) continue;
                 _maze[f].entity = &_brickWall;
+            }
             for (auto f : map_switching_cells[0])
+            {
+                if (_maze[f].entity && _maze[f].entity != &_brickWall) continue;
                 _maze[f].entity = nullptr;
+            }
         }
     }
 }
@@ -536,34 +644,107 @@ void SceneA2::CODEUPDATE_MapOne()
 void SceneA2::CODEINIT_MapTwo()
 {
     map_switching_cells.clear();
+    _possiblePatrolPoints.clear();
 
     auto five = _maze.getCells(5);
     auto six = _maze.getCells(6);
     auto seven = _maze.getCells(7);
+    _possiblePatrolPoints = _maze.getCells(10);
 
     map_switching_cells.emplace_back(five);
     map_switching_cells.emplace_back(six);
     map_switching_cells.emplace_back(seven);
 
-    for (auto f : five)
-        _maze[f] = no_cost_tile;
-    for (auto f : six)
-        _maze[f] = no_cost_tile;
+//    for (auto f : five)
+//        _maze[f] = no_cost_tile;
+//    for (auto f : six)
+//        _maze[f] = no_cost_tile;
     for (auto f : seven)
-        _maze[f] = no_cost_tile;
+        _maze[f] = _maze[five[0]]; // Place Brick Wall Hacky Code
+
+    // Set the Ground Texture for the End Of Map Marker
+    _maze[_maze.coordToIndex(hardcoded_map_endpoint)].texture = end_level_texture;
 }
 
 void SceneA2::CODEUPDATE_MapTwo()
 {
+    static int turn_timer = _totalTurns;
+    static int alternator = false;
 
+    if (_totalTurns - turn_timer > 2)
+    {
+        ++alternator;
+        alternator %= 3;
+        LOGINFO("Turn Diff: " << _totalTurns - turn_timer);
+        turn_timer = _totalTurns;
+        LOGINFO("Alternator " << alternator);
+
+        for (auto f : map_switching_cells[0])
+        {
+            if (_maze[f].entity && _maze[f].entity != &_brickWall) continue;
+            _maze[f].entity = nullptr;
+        }
+        for (auto f : map_switching_cells[1])
+        {
+            if (_maze[f].entity && _maze[f].entity != &_brickWall) continue;
+            _maze[f].entity = nullptr;
+        }
+        for (auto f : map_switching_cells[2])
+        {
+            if (_maze[f].entity && _maze[f].entity != &_brickWall) continue;
+            _maze[f].entity = nullptr;
+        }
+        for (auto f : map_switching_cells[alternator])
+        {
+            if (_maze[f].entity && _maze[f].entity != &_brickWall) continue;
+            _maze[f].entity = &_brickWall;
+        }
+    }
 }
 
 void SceneA2::CODEINIT_MapThree()
 {
+    map_switching_cells.clear();
+    _possiblePatrolPoints.clear();
 
+    auto five = _maze.getCells(5);
+    auto six = _maze.getCells(6);
+    _possiblePatrolPoints = _maze.getCells(10);
+
+    map_switching_cells.emplace_back(five);
+    map_switching_cells.emplace_back(six);
+
+    // Set the Ground Texture for the End Of Map Marker
+    _maze[_maze.coordToIndex(hardcoded_map_endpoint)].texture = end_level_texture;
 }
 
 void SceneA2::CODEUPDATE_MapThree()
 {
+    static int turn_timer = _totalTurns;
+    static int alternator = false;
 
+    if (_totalTurns - turn_timer > 1)
+    {
+        ++alternator;
+        alternator %= 2;
+        LOGINFO("Turn Diff: " << _totalTurns - turn_timer);
+        turn_timer = _totalTurns;
+        LOGINFO("Alternator " << alternator);
+
+        for (auto f : map_switching_cells[0])
+        {
+            if (_maze[f].entity && _maze[f].entity != &_brickWall) continue;
+            _maze[f].entity = nullptr;
+        }
+        for (auto f : map_switching_cells[1])
+        {
+            if (_maze[f].entity && _maze[f].entity != &_brickWall) continue;
+            _maze[f].entity = nullptr;
+        }
+        for (auto f : map_switching_cells[alternator])
+        {
+            if (_maze[f].entity && _maze[f].entity != &_brickWall) continue;
+            _maze[f].entity = &_brickWall;
+        }
+    }
 }

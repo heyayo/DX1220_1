@@ -6,6 +6,8 @@
 
 #include "GLFW/glfw3.h"
 
+#include <set>
+
 class SceneA2 : public SceneBase
 {
     typedef void(SceneA2::*MAP_CODE)();
@@ -19,6 +21,7 @@ class SceneA2 : public SceneBase
     int windowWidth;
     int windowHeight;
     const int cameraViewDistance = 25;
+    const int playerFogViewRadius = 8;
     float aspectRatio;
 
     Mesh* _square;
@@ -38,9 +41,12 @@ class SceneA2 : public SceneBase
     bool _playerTurn = true;
     bool _playerLost = false;
     const int _playerActionPointsStandard = 10;
+    std::vector<size_t> _possiblePatrolPoints;
+    std::set<EntityLite*> _sighted;
 
     void RenderMaze();
     void RenderMazeWithFog();
+    void RenderFogOverlay();
     void RenderEntities();
     void RenderCourseLine(const std::vector<vec2>& course);
     void MoveCamera(const Vector3& offset);
